@@ -58,7 +58,6 @@ export default function Home() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const [userStatus, setUserStatus] = useState<any>(null);
-  const [isRPMLocked, setIsRPMLocked] = useState(false);
 
   useEffect(() => {
     fetchUserStatus();
@@ -101,12 +100,6 @@ export default function Home() {
           user_email: session?.user?.email || "unknown"
         })
       });
-
-      if (res.status === 429) {
-        setIsRPMLocked(true);
-        setTimeout(() => setIsRPMLocked(false), 60000); // Unlock after 1 min
-        return;
-      }
 
       if (!res.ok) throw new Error("Network response was not ok");
       fetchUserStatus();
@@ -398,7 +391,7 @@ export default function Home() {
 
   // Helper for Navigation
   function NavItem({ icon, label, isOpen, active = false, onClick, href }: { icon: React.ReactNode, label: string, isOpen: boolean, active?: boolean, onClick?: () => void, href?: string }) {
-    const isSoraLocked = label === "Sora Mode" && userStatus && userStatus.messages_sent >= 10 && !userStatus.is_pro;
+    const isSoraLocked = false; // Limits removed
 
     const content = (
       <div className="flex flex-1 items-center justify-between">
@@ -618,7 +611,6 @@ export default function Home() {
 
                 <div className="mt-3 relative">
                   {(() => {
-                    const isInputLocked = isRPMLocked || (userStatus && userStatus.messages_sent >= 10 && !userStatus.is_pro);
                     return (
                       <>
                         <textarea
@@ -631,19 +623,19 @@ export default function Home() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                               e.preventDefault();
-                              if (!isInputLocked) handleSendPrompt();
+                              handleSendPrompt();
                             }
                           }}
-                          placeholder={isRPMLocked ? "RPM Limit Reached. Locked for 1 min..." : isStreaming ? "Generating response..." : isInputLocked ? "10-Message Free Limit Reached. Go Pro!" : "Ask Super AI anything..."}
-                          className="w-full bg-transparent text-white placeholder-gray-500 resize-none outline-none max-h-48 min-h-[50px] pr-12 overflow-y-auto disabled:opacity-50"
+                          placeholder={isStreaming ? "Generating response..." : "Ask Super AI anything..."}
+                          className="w-full bg-transparent text-white placeholder-gray-500 resize-none outline-none max-h-48 min-h-[50px] pr-12 overflow-y-auto"
                           rows={1}
-                          disabled={isStreaming || isInputLocked}
+                          disabled={isStreaming}
                         />
                         <div className="absolute right-2 bottom-2">
                           <button
                             onClick={() => handleSendPrompt()}
-                            disabled={!prompt.trim() || isStreaming || isInputLocked}
-                            className={`p-2 rounded-lg transition-colors ${isInputLocked ? 'bg-gray-800 text-gray-500' : 'bg-white text-black hover:bg-gray-200'} disabled:opacity-50`}
+                            disabled={!prompt.trim() || isStreaming}
+                            className={`p-2 rounded-lg transition-colors bg-white text-black hover:bg-gray-200 disabled:opacity-50`}
                           >
                             <Sparkles size={18} />
                           </button>

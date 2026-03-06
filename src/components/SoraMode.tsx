@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Sparkles, Loader2, RefreshCw } from "lucide-react";
-import { useSession } from "next-auth/react";
 
 interface RankedModel {
     id: string;
@@ -20,7 +19,7 @@ interface SoraMessage {
 }
 
 export default function SoraMode() {
-    const { data: session } = useSession();
+    const sessionEmail = "public-user";
     const [messages, setMessages] = useState<SoraMessage[]>([]);
     const [prompt, setPrompt] = useState("");
     const [isGlobalStreaming, setIsGlobalStreaming] = useState(false);
@@ -41,13 +40,13 @@ export default function SoraMode() {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
-                    "x-user-email": session?.user?.email || "unknown"
+                    "x-user-email": sessionEmail
                 },
                 body: JSON.stringify({
                     prompt: userPrompt,
                     models: [modelId],
                     personality: "normal",
-                    user_email: session?.user?.email || "unknown"
+                    user_email: sessionEmail
                 })
             });
             console.log("Sora Stream Res:", res.status);
@@ -136,11 +135,11 @@ export default function SoraMode() {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
-                    "x-user-email": session?.user?.email || "unknown"
+                    "x-user-email": sessionEmail
                 },
                 body: JSON.stringify({
                     prompt: currentPrompt,
-                    user_email: session?.user?.email || "unknown"
+                    user_email: sessionEmail
                 })
             });
 

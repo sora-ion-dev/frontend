@@ -80,16 +80,11 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                     onChange={(e) => onModelChange(e.target.value)}
                                     className="appearance-none bg-transparent text-sm font-bold text-gray-100 w-[140px] truncate cursor-pointer outline-none pe-4"
                                 >
-                                    {brand.models.map(m => {
-                                        const isLimitReached = userStatus && userStatus.messages_sent >= 10 && !userStatus.is_pro;
-                                        const isModelAllowed = !isLimitReached || m.id === "meta-llama/Llama-3.2-3B-Instruct";
-
-                                        return (
-                                            <option key={`${m.id}-${m.tier}`} value={m.id} disabled={!isModelAllowed} className="bg-[#111] text-white">
-                                                {m.name} {!isModelAllowed ? "(GO PRO)" : ""}
-                                            </option>
-                                        );
-                                    })}
+                                    {brand.models.map(m => (
+                                        <option key={`${m.id}-${m.tier}`} value={m.id} className="bg-[#111] text-white">
+                                            {m.name}
+                                        </option>
+                                    ))}
                                 </select>
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 group-hover:text-white">
                                     <svg width="8" height="5" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
