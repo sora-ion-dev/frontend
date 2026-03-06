@@ -47,8 +47,8 @@ const FEATURES = [
   },
   {
     icon: <Shield size={22} className="text-green-400" />,
-    title: "Secure Authentication",
-    desc: "Sign in securely with your Google account. Your chats are private and never shared.",
+    title: "Instant Access",
+    desc: "No sign-up required. Start chatting immediately with the world's best AI models.",
     color: "from-green-500/10 to-transparent",
     border: "border-green-500/20",
   },
@@ -76,7 +76,7 @@ const FAQS = [
   },
   {
     q: "Do I need an account to use Super AI?",
-    a: "Yes — you can sign in with your Google account in one click. Your chat history and preferences are saved securely to your account.",
+    a: "No — Super AI is open to everyone. You can start chatting immediately without any account or sign-in.",
   },
   {
     q: "Is my data private?",
@@ -84,7 +84,7 @@ const FAQS = [
   },
   {
     q: "Is Super AI free to use?",
-    a: "Super AI is currently in early access. Create your free account and start chatting today — no credit card required.",
+    a: "Super AI is currently in early access. Start chatting today for free — no account or credit card required.",
   },
 ];
 
@@ -147,14 +147,11 @@ export default function LandingPage() {
 
           {/* CTA */}
           <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden md:block text-sm text-gray-400 hover:text-white transition-colors">
-              Sign In
-            </Link>
             <Link
-              href="/login"
+              href="/app"
               className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/20"
             >
-              Get Started Free
+              Start Chatting
             </Link>
             <button className="md:hidden text-gray-400" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -170,7 +167,7 @@ export default function LandingPage() {
                 {link}
               </button>
             ))}
-            <Link href="/login" className="text-indigo-400 text-sm font-semibold">Sign In →</Link>
+            <Link href="/app" className="text-indigo-400 text-sm font-semibold">Start Chatting →</Link>
           </div>
         )}
       </nav>
@@ -212,10 +209,10 @@ export default function LandingPage() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Link
-              href="/login"
+              href="/app"
               className="px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 font-bold text-[16px] transition-all shadow-[0_0_40px_rgba(99,102,241,0.3)] hover:shadow-[0_0_60px_rgba(99,102,241,0.5)] w-full sm:w-auto"
             >
-              Get Started Free →
+              Start Chatting Free →
             </Link>
             <button
               onClick={() => scrollTo("features")}
@@ -343,8 +340,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/login" className="block text-center py-3 rounded-2xl border border-white/10 hover:border-white/20 text-gray-300 hover:text-white font-semibold transition-all">
-                Get Started Free
+              <Link href="/app" className="block text-center py-3 rounded-2xl border border-white/10 hover:border-white/20 text-gray-300 hover:text-white font-semibold transition-all">
+                Start Chatting Free
               </Link>
             </div>
 
@@ -397,11 +394,11 @@ export default function LandingPage() {
           </h2>
           <p className="text-gray-400 text-lg mb-10">Join thousands of users who get better answers with Super AI.</p>
           <Link
-            href="/login"
+            href="/app"
             className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 font-bold text-lg transition-all shadow-[0_0_50px_rgba(99,102,241,0.3)] hover:shadow-[0_0_80px_rgba(99,102,241,0.5)]"
           >
             <Sparkles size={20} />
-            Get Started Free — It&apos;s Free
+            Start Chatting Now — It&apos;s Free
           </Link>
         </div>
       </section>

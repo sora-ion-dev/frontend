@@ -5,10 +5,9 @@ import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, Refre
 import { AIBrand, ChatMessage, MODEL_BRANDS } from "@/types";
 import AIColumn from "@/components/AIColumn";
 import SoraMode from "@/components/SoraMode";
-import { useSession, signOut } from "next-auth/react";
 
 export default function Home() {
-  const { data: session } = useSession();
+  const session = { user: { email: "public-user", name: "Guest" } }; // Dummy session for public access
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [prompt, setPrompt] = useState("");
@@ -62,10 +61,8 @@ export default function Home() {
   const [isRPMLocked, setIsRPMLocked] = useState(false);
 
   useEffect(() => {
-    if (session?.user?.email) {
-      fetchUserStatus();
-    }
-  }, [session]);
+    fetchUserStatus();
+  }, []);
 
   const fetchUserStatus = async () => {
     try {
@@ -400,8 +397,27 @@ export default function Home() {
   };
 
   // Helper for Navigation
-  function NavItem({ icon, label, isOpen, active = false, onClick }: { icon: React.ReactNode, label: string, isOpen: boolean, active?: boolean, onClick?: () => void }) {
+  function NavItem({ icon, label, isOpen, active = false, onClick, href }: { icon: React.ReactNode, label: string, isOpen: boolean, active?: boolean, onClick?: () => void, href?: string }) {
     const isSoraLocked = label === "Sora Mode" && userStatus && userStatus.messages_sent >= 10 && !userStatus.is_pro;
+
+    const content = (
+      <div className="flex flex-1 items-center justify-between">
+        <span className="font-medium text-sm">{label}</span>
+        {isSoraLocked && <span className="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">PRO</span>}
+      </div>
+    );
+
+    if (href) {
+        return (
+            <a
+                href={href}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active ? 'bg-[#ff4d4d]/10 text-[#ff4d4d]' : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'} ${!isOpen ? 'justify-center' : ''}`}
+            >
+                {icon}
+                {isOpen && content}
+            </a>
+        );
+    }
 
     return (
       <button
@@ -409,12 +425,7 @@ export default function Home() {
         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active ? 'bg-[#ff4d4d]/10 text-[#ff4d4d]' : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'} ${!isOpen ? 'justify-center' : ''} ${isSoraLocked ? 'opacity-30 cursor-not-allowed' : ''}`}
       >
         {icon}
-        {isOpen && (
-          <div className="flex flex-1 items-center justify-between">
-            <span className="font-medium text-sm">{label}</span>
-            {isSoraLocked && <span className="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">PRO</span>}
-          </div>
-        )}
+        {isOpen && content}
       </button>
     );
   }
@@ -464,14 +475,12 @@ export default function Home() {
               active={activeTab === 'sora'}
               onClick={() => setActiveTab('sora')}
             />
-            {session?.user?.email === "bhaveshkori001@gmail.com" && (
-              <NavItem
-                icon={<Shield size={18} className="text-indigo-400" />}
-                label="Admin Panel"
-                isOpen={sidebarOpen}
-                onClick={() => window.open("/admin", "_blank")}
-              />
-            )}
+            <NavItem
+              icon={<Shield size={18} className="text-indigo-400" />}
+              label="Admin Panel"
+              isOpen={sidebarOpen}
+              href="/admin"
+            />
           </nav>
         </div>
 
@@ -503,24 +512,17 @@ export default function Home() {
           )}
           <NavItem icon={<Settings size={18} />} label="Settings" isOpen={sidebarOpen} />
 
-          {/* User Info + Sign Out */}
+          {/* User Info Removed for public access */}
           <div className={`mt-2 pt-3 border-t border-[#222] flex items-center gap-3 ${sidebarOpen ? '' : 'justify-center'}`}>
-            {session?.user?.image && (
-              <img src={session.user.image} alt="avatar" className="w-8 h-8 rounded-full shrink-0 ring-2 ring-indigo-500/40" />
-            )}
+            <div className="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-400 shrink-0">
+                <Sparkles size={16} />
+            </div>
             {sidebarOpen && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-200 truncate">{session?.user?.name}</p>
-                <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
+                <p className="text-sm font-medium text-gray-200 truncate">Guest Access</p>
+                <p className="text-xs text-gray-500 truncate">Sora-ion Mode</p>
               </div>
             )}
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              title="Sign Out"
-              className="text-gray-500 hover:text-red-400 transition-colors shrink-0"
-            >
-              <LogOut size={16} />
-            </button>
           </div>
         </div>
       </aside>

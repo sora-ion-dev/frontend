@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { Sparkles, Shield, User, CreditCard, Power, Check, X, Mail, Loader2, RefreshCw } from "lucide-react";
+import { Sparkles, Shield, User, CreditCard, Power, Check, X, Mail, Loader2, RefreshCw, Key } from "lucide-react";
 
 const ADMIN_EMAIL = "bhaveshkori001@gmail.com";
 
@@ -14,18 +12,37 @@ interface DashboardData {
 }
 
 export default function AdminDashboard() {
-    const { data: session, status } = useSession();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [adminKey, setAdminKey] = useState("");
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<DashboardData | null>(null);
     const [grantEmail, setGrantEmail] = useState("");
 
     useEffect(() => {
-        if (status === "loading") return;
-        if (!session || session.user?.email !== ADMIN_EMAIL) {
-            redirect("/app");
+        // Check if already authenticated via cookie
+        const cookieKey = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("admin_key="))
+            ?.split("=")[1];
+        
+        if (cookieKey === "Bhavesh#21") {
+            setIsAuthenticated(true);
+            fetchAdminData();
+        } else {
+            setLoading(false);
         }
-        fetchAdminData();
-    }, [session, status]);
+    }, []);
+
+    const handleLogin = () => {
+        if (adminKey === "Bhavesh#21") {
+            document.cookie = `admin_key=${adminKey}; path=/; max-age=86400`; // 24 hours
+            setIsAuthenticated(true);
+            setLoading(true);
+            fetchAdminData();
+        } else {
+            alert("Incorrect Admin Key!");
+        }
+    };
 
     const fetchAdminData = async () => {
         try {
@@ -81,6 +98,40 @@ export default function AdminDashboard() {
     };
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-indigo-500" /></div>;
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+                <div className="max-w-md w-full glass-panel p-8 rounded-3xl border border-white/10 text-center animate-in fade-in zoom-in duration-300">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 mx-auto mb-6">
+                        <Shield size={32} />
+                    </div>
+                    <h1 className="text-2xl font-bold mb-2">Admin Access</h1>
+                    <p className="text-gray-500 text-sm mb-8">Enter your secret key to continue</p>
+                    
+                    <div className="space-y-4">
+                        <div className="relative">
+                            <Key size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                            <input
+                                type="password"
+                                placeholder="Enter Secret Key..."
+                                value={adminKey}
+                                onChange={(e) => setAdminKey(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 outline-none focus:border-indigo-500/50 transition-all font-mono"
+                            />
+                        </div>
+                        <button
+                            onClick={handleLogin}
+                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-600/20 active:scale-95 transition-all"
+                        >
+                            Unlock Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-black text-white p-6 md:p-12 overflow-y-auto">
