@@ -98,6 +98,9 @@ export const MODEL_BRANDS: AIBrand[] = [
     },
 ];
 
+export const FIESTA_MODEL_BRANDS = MODEL_BRANDS;
+
+
 export interface ChatMessage {
     id: string;
     role: "user" | "assistant";
