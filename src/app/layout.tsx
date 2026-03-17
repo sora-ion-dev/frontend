@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://superai-new.vercel.app"),
   title: "Super AI | Compare and Battle Global LLMs",
   description: "Experience the world's most powerful AI models in one place. Compare Gemini, ChatGPT, Claude, and DeepSeek for free with real-time evaluation and routing.",
+  verification: {
+    google: "vi6sMrNbzQC1osOVH2v4haUq3o8O2J0eAIJq_b7HJN8",
+  },
   manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
