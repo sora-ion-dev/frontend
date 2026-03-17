@@ -60,8 +60,8 @@ export default function ImageMode() {
             <div className="w-full max-w-5xl flex flex-col gap-10 z-10">
                 {!generatedImage && !isLoading && (
                     <div className="text-center space-y-6 animate-float">
-                        <div className="w-24 h-24 rounded-[2rem] bg-accent/10 border-2 border-accent/20 flex items-center justify-center mx-auto shadow-2xl glow-accent border-panel-border">
-                            <Frame size={48} className="text-accent animate-pulse" />
+                        <div className="w-24 h-24 rounded-[2rem] bg-accent/10 border-2 border-accent/20 flex items-center justify-center mx-auto shadow-2xl glow-accent border-panel-border overflow-hidden p-4">
+                            <img src="/logo.png" alt="Super AI Logo" className="w-full h-full object-contain" />
                         </div>
                         <div className="space-y-3">
                             <h2 className="text-5xl font-black text-foreground tracking-tighter uppercase">Visual Synthesis</h2>

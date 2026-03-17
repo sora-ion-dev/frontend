@@ -470,8 +470,17 @@ export default function Home() {
       >
         <div className="p-4 flex flex-col gap-6">
           <div className="flex items-center justify-between">
-            {sidebarOpen && <h1 className="text-2xl font-black tracking-tighter text-foreground flex items-center gap-2 px-2"><Sparkles className="text-accent animate-float" size={24} /> SUPER AI</h1>}
-            {!sidebarOpen && <Sparkles className="text-accent mx-auto hidden md:block animate-float" size={28} />}
+            {sidebarOpen && (
+              <h1 className="text-2xl font-black tracking-tighter text-foreground flex items-center gap-2 px-2">
+                <img src="/logo.png" alt="Super AI Logo" className="w-8 h-8 rounded-lg" />
+                SUPER AI
+              </h1>
+            )}
+            {!sidebarOpen && (
+              <div className="mx-auto hidden md:block">
+                <img src="/logo.png" alt="Super AI Logo" className="w-9 h-9 rounded-lg" />
+              </div>
+            )}
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-muted hover:text-foreground md:hidden">
               <X size={20} />
             </button>
@@ -606,6 +615,9 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
+            <div className="md:hidden">
+              <img src="/logo.png" alt="Logo" className="w-6 h-6 rounded-md" />
+            </div>
             <button
               onClick={() => setIsFullScreen(!isFullScreen)}
               className="text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-accent/30 bg-accent/5 hover:bg-accent/20 text-accent px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-accent/5">

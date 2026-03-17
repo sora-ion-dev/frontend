@@ -192,8 +192,8 @@ export default function SoraMode() {
             <div className="flex-1 overflow-y-auto w-full relative hide-scrollbar p-6 md:p-12 pb-64 flex flex-col items-center z-10">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center max-w-2xl mx-auto space-y-8 animate-float">
-                        <div className="w-20 h-20 rounded-3xl bg-accent/5 flex items-center justify-center border border-accent/10 shadow-2xl">
-                            <Zap size={40} className="text-accent" />
+                        <div className="w-20 h-20 rounded-3xl bg-accent/5 flex items-center justify-center border border-accent/10 shadow-2xl overflow-hidden p-3">
+                            <img src="/logo.png" alt="Super AI Logo" className="w-full h-full object-contain" />
                         </div>
                         <div className="space-y-2">
                             <h2 className="text-4xl font-semibold text-foreground tracking-tight">Sora Routing Engine</h2>
