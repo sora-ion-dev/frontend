@@ -123,17 +123,17 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030303] text-white overflow-x-hidden">
+    <div className="min-h-screen mesh-bg text-white overflow-x-hidden selection:bg-primary/30">
 
       {/* ===== NAVBAR ===== */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/60 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Sparkles size={16} className="text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary via-accent to-secondary flex items-center justify-center shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-300">
+              <Sparkles size={20} className="text-white" />
             </div>
-            <span className="font-bold text-lg tracking-tight">Super AI</span>
+            <span className="font-black text-xl tracking-tighter uppercase italic">Super AI</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -149,7 +149,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/app"
-              className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/20"
+              className="text-sm font-bold px-6 py-2.5 rounded-full bg-white text-black hover:bg-gray-200 transition-all shadow-xl shadow-white/5 active:scale-95"
             >
               Start Chatting
             </Link>
@@ -191,14 +191,14 @@ export default function LandingPage() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight mb-6">
-            World&apos;s Most
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
+            The World&apos;s
             <br />
-            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Powerful AIs.
+            <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient-x">
+              Ultimate AI.
             </span>
             <br />
-            One Chat.
+            Unified.
           </h1>
 
           <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -207,18 +207,18 @@ export default function LandingPage() {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-20">
             <Link
               href="/app"
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 font-bold text-[16px] transition-all shadow-[0_0_40px_rgba(99,102,241,0.3)] hover:shadow-[0_0_60px_rgba(99,102,241,0.5)] w-full sm:w-auto"
+              className="px-10 py-5 rounded-full bg-white text-black hover:invert font-black text-[18px] transition-all shadow-[0_0_50px_rgba(255,255,255,0.2)] w-full sm:w-auto active:scale-95"
             >
-              Start Chatting Free →
+              Start Chatting Free —&gt;
             </Link>
             <button
               onClick={() => scrollTo("features")}
-              className="px-8 py-4 rounded-2xl border border-white/10 hover:border-white/20 text-gray-300 hover:text-white font-semibold text-[16px] transition-all bg-white/[0.03] w-full sm:w-auto"
+              className="px-10 py-5 rounded-full glass-thin hover:glass-thick text-white font-bold text-[18px] transition-all w-full sm:w-auto active:scale-95"
             >
-              See Features
+              Features
             </button>
           </div>
 

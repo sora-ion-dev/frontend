@@ -1,20 +1,46 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2 } from "lucide-react";
+import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain } from "lucide-react";
 import { AIBrand, ChatMessage, MODEL_BRANDS } from "@/types";
 import AIColumn from "@/components/AIColumn";
 import SoraMode from "@/components/SoraMode";
+import PromptMode from "@/components/PromptMode";
+import ImageMode from "@/components/ImageMode";
+import SettingsModal from "@/components/SettingsModal";
 
 export default function Home() {
   const session = { user: { email: "public-user", name: "Guest" } }; // Dummy session for public access
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  useEffect(() => {
+    if (window.innerWidth > 768) setSidebarOpen(true);
+  }, []);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [rankings, setRankings] = useState<string[]>([]);
-  const [personality, setPersonality] = useState("normal");
-  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora">("superfiesta"); // Default to SuperFiesta
+  const [personality, setPersonality] = useState("Professional");
+  const [webSearch, setWebSearch] = useState(false);
+  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "image_gen">("superfiesta"); 
+
+  useEffect(() => {
+    const loadSettings = () => {
+      const savedPersona = localStorage.getItem("superai_persona");
+      const savedWebSearch = localStorage.getItem("superai_websearch") === "true";
+      if (savedPersona) setPersonality(savedPersona);
+      setWebSearch(savedWebSearch);
+    };
+
+    loadSettings();
+    window.addEventListener("storage", loadSettings);
+    window.addEventListener("settingsChanged", loadSettings);
+    
+    return () => {
+      window.removeEventListener("storage", loadSettings);
+      window.removeEventListener("settingsChanged", loadSettings);
+    };
+  }, []);
   const [fiestaHistory, setFiestaHistory] = useState<{ id: string, prompt: string, timestamp: number }[]>([]);
 
   const [enabledModels, setEnabledModels] = useState<Record<string, boolean>>(() => {
@@ -87,6 +113,10 @@ export default function Home() {
   const streamResponse = async (brandId: string, userPrompt: string, selectedModelId: string, assistantMsgId: string) => {
     try {
       const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      // Read latest settings right before sending
+      const currentPersona = localStorage.getItem("superai_persona") || "Professional";
+      const currentWebSearch = localStorage.getItem("superai_websearch") === "true";
+
       const res = await fetch(`${BACKEND_URL}/chat/stream`, {
         method: "POST",
         headers: { 
@@ -96,7 +126,8 @@ export default function Home() {
         body: JSON.stringify({
           prompt: userPrompt,
           models: [selectedModelId],
-          personality: personality,
+          personality: currentPersona,
+          web_search: currentWebSearch,
           user_email: session?.user?.email || "unknown"
         })
       });
@@ -390,12 +421,12 @@ export default function Home() {
   };
 
   // Helper for Navigation
-  function NavItem({ icon, label, isOpen, active = false, onClick, href }: { icon: React.ReactNode, label: string, isOpen: boolean, active?: boolean, onClick?: () => void, href?: string }) {
+  function NavItem({ icon, label, isOpen, active = false, onClick, href, className }: { icon: React.ReactNode, label: string, isOpen: boolean, active?: boolean, onClick?: () => void, href?: string, className?: string }) {
     const isSoraLocked = false; // Limits removed
 
     const content = (
       <div className="flex flex-1 items-center justify-between">
-        <span className="font-medium text-sm">{label}</span>
+        <span className="font-bold text-sm">{label}</span>
         {isSoraLocked && <span className="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">PRO</span>}
       </div>
     );
@@ -404,7 +435,7 @@ export default function Home() {
         return (
             <a
                 href={href}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active ? 'bg-[#ff4d4d]/10 text-[#ff4d4d]' : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'} ${!isOpen ? 'justify-center' : ''}`}
+                className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-300 ${active ? 'bg-accent text-white shadow-lg' : 'text-muted hover:text-foreground hover:bg-card'} ${!isOpen ? 'justify-center md:flex hidden' : ''} ${className || ""}`}
             >
                 {icon}
                 {isOpen && content}
@@ -415,7 +446,7 @@ export default function Home() {
     return (
       <button
         onClick={label === "Sora Mode" && isSoraLocked ? undefined : onClick}
-        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active ? 'bg-[#ff4d4d]/10 text-[#ff4d4d]' : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'} ${!isOpen ? 'justify-center' : ''} ${isSoraLocked ? 'opacity-30 cursor-not-allowed' : ''}`}
+        className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-300 ${active ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'text-muted hover:text-foreground hover:bg-card'} ${!isOpen ? 'justify-center md:flex hidden' : ''} ${isSoraLocked ? 'opacity-30 cursor-not-allowed' : ''} ${className || ""}`}
       >
         {icon}
         {isOpen && content}
@@ -424,16 +455,24 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-black overflow-hidden selection:bg-red-500/30">
+    <div className="flex h-screen w-full transition-colors duration-500 overflow-hidden selection:bg-accent/30 bg-black">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <aside
-        className={`${isFullScreen ? 'hidden' : (sidebarOpen ? 'w-64' : 'w-0 opacity-0 md:w-20 md:opacity-100')} 
-        transition-all duration-300 ease-in-out border-r border-[#222222] bg-[#0a0a0a] flex flex-col justify-between shrink-0 z-20 absolute md:relative h-full`}
+        className={`${isFullScreen ? 'hidden' : (sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full md:w-22 md:translate-x-0 md:opacity-100')} 
+        transition-all duration-500 ease-in-out border-r border-panel-border glass-panel flex flex-col justify-between shrink-0 z-50 fixed md:relative h-full ${!sidebarOpen ? 'pointer-events-none md:pointer-events-auto' : ''}`}
       >
         <div className="p-4 flex flex-col gap-6">
           <div className="flex items-center justify-between">
-            {sidebarOpen && <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2"><Sparkles className="text-[#ff4d4d]" size={20} /> Super AI</h1>}
-            {!sidebarOpen && <Sparkles className="text-[#ff4d4d] mx-auto hidden md:block" size={24} />}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-400 hover:text-white md:hidden">
+            {sidebarOpen && <h1 className="text-2xl font-black tracking-tighter text-foreground flex items-center gap-2 px-2"><Sparkles className="text-accent animate-float" size={24} /> SUPER AI</h1>}
+            {!sidebarOpen && <Sparkles className="text-accent mx-auto hidden md:block animate-float" size={28} />}
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-muted hover:text-foreground md:hidden">
               <X size={20} />
             </button>
           </div>
@@ -447,29 +486,55 @@ export default function Home() {
               setColumnMessages(initial);
               setRankings([]);
             }}
-            className="flex items-center justify-center gap-2 bg-[#ff4d4d] hover:bg-[#ff6666] text-white py-2.5 px-4 rounded-xl font-medium transition-colors shadow-[0_0_15px_rgba(255,77,77,0.15)]">
+            className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-2xl font-bold transition-all shadow-lg shadow-accent/20 active:scale-95">
             <MessageSquarePlus size={18} />
-            {sidebarOpen && <span>New Chat</span>}
+            {sidebarOpen && <span>New Conversation</span>}
           </button>
 
-          <nav className="flex flex-col gap-2 mt-4">
+          <nav className="flex flex-col gap-1.5 mt-2">
             <NavItem icon={<Search size={18} />} label="Search" isOpen={sidebarOpen} />
             <NavItem
-              icon={<Sparkles size={18} className="text-[#ff4d4d]" />}
+              icon={<Sparkles size={18} className="text-orange-400" />}
               label="SuperFiesta Mode"
               isOpen={sidebarOpen}
-              active={activeTab === 'superfiesta'}
-              onClick={() => setActiveTab('superfiesta')}
-            />
+                active={activeTab === 'superfiesta'}
+                onClick={() => {
+                    setActiveTab('superfiesta');
+                    if (window.innerWidth < 768) setSidebarOpen(false);
+                }}
+              />
             <NavItem
               icon={<Sparkles size={18} className="text-indigo-400" />}
               label="Sora Mode"
               isOpen={sidebarOpen}
-              active={activeTab === 'sora'}
-              onClick={() => setActiveTab('sora')}
-            />
+                active={activeTab === 'sora'}
+                onClick={() => {
+                    setActiveTab('sora');
+                    if (window.innerWidth < 768) setSidebarOpen(false);
+                }}
+              />
             <NavItem
-              icon={<Shield size={18} className="text-indigo-400" />}
+              icon={<Layers size={18} className="text-purple-400" />}
+              label="Image Generator"
+              isOpen={sidebarOpen}
+                active={activeTab === 'image_gen'}
+                onClick={() => {
+                    setActiveTab('image_gen');
+                    if (window.innerWidth < 768) setSidebarOpen(false);
+                }}
+              />
+            <NavItem
+              icon={<Brain size={18} className="text-blue-400" />}
+              label="Prompt AI"
+              isOpen={sidebarOpen}
+                active={activeTab === 'prompt_ai'}
+                onClick={() => {
+                    setActiveTab('prompt_ai');
+                    if (window.innerWidth < 768) setSidebarOpen(false);
+                }}
+              />
+            <NavItem
+              icon={<Shield size={18} className="text-red-400" />}
               label="Admin Panel"
               isOpen={sidebarOpen}
               href="/admin"
@@ -477,16 +542,16 @@ export default function Home() {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-[#222222] overflow-hidden flex flex-col min-h-0">
+        <div className="p-4 border-t border-panel-border overflow-hidden flex flex-col min-h-0">
           {sidebarOpen && (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              <div className="flex items-center gap-2 mb-3 text-gray-500">
+              <div className="flex items-center gap-2 mb-3 text-muted">
                 <HistoryIcon size={14} />
-                <span className="text-xs font-semibold uppercase tracking-wider">History</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Recents</span>
               </div>
-              <div className="flex-1 overflow-y-auto pr-2 space-y-2 mb-4 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto pr-2 space-y-1 mb-4 hide-scrollbar">
                 {fiestaHistory.length === 0 ? (
-                  <div className="text-xs text-gray-600 italic px-2">No history yet</div>
+                  <div className="text-[10px] text-muted/50 italic px-2 font-bold">No threads yet</div>
                 ) : (
                   fiestaHistory.map(item => (
                     <button
@@ -494,7 +559,7 @@ export default function Home() {
                       onClick={() => {
                         setPrompt(item.prompt);
                       }}
-                      className="w-full text-left p-2 rounded-lg text-xs text-gray-400 hover:bg-[#111] hover:text-gray-200 transition-all border border-transparent hover:border-white/5 truncate"
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs text-muted hover:bg-card hover:text-foreground transition-all truncate font-bold"
                     >
                       {item.prompt}
                     </button>
@@ -503,154 +568,164 @@ export default function Home() {
               </div>
             </div>
           )}
-          <NavItem icon={<Settings size={18} />} label="Settings" isOpen={sidebarOpen} />
+          
+          <NavItem 
+            icon={<Settings size={18} />} 
+            label="Settings" 
+            isOpen={sidebarOpen} 
+            onClick={() => setIsSettingsOpen(true)}
+            className={!sidebarOpen ? 'md:flex hidden' : ''}
+          />
 
-          {/* User Info Removed for public access */}
-          <div className={`mt-2 pt-3 border-t border-[#222] flex items-center gap-3 ${sidebarOpen ? '' : 'justify-center'}`}>
-            <div className="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-400 shrink-0">
+          <div className={`mt-2 pt-3 border-t border-panel-border flex items-center gap-3 ${sidebarOpen ? '' : 'justify-center'}`}>
+            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent shrink-0 animate-float">
                 <Sparkles size={16} />
             </div>
             {sidebarOpen && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-200 truncate">Guest Access</p>
-                <p className="text-xs text-gray-500 truncate">Sora-ion Mode</p>
+                <p className="text-xs font-black text-foreground truncate uppercase tracking-tighter">Premium Access</p>
+                <p className="text-[10px] text-muted truncate font-bold uppercase">Sora-ion Mode</p>
               </div>
             )}
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col h-full relative">
-        <header className="h-16 border-b border-[#222222] bg-[#0a0a0a]/80 backdrop-blur-md flex items-center justify-between px-6 z-10 shrink-0">
-          <div className="flex items-center gap-4">
+      <main className="flex-1 flex flex-col h-full relative overflow-hidden">
+        <header className="h-16 border-b border-panel-border glass-panel backdrop-blur-xl flex items-center justify-between px-4 md:px-6 z-10 shrink-0">
+          <div className="flex items-center gap-3 md:gap-4">
             {!isFullScreen && (
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-400 hover:text-white">
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-muted hover:text-foreground p-2 -ml-2">
                 <Menu size={20} />
               </button>
             )}
-            <span className="font-medium text-gray-200 capitalize">
-              {activeTab === 'superfiesta' ? 'SuperFiesta Mode' : 'Sora Mode'}
+            <span className="font-black text-foreground uppercase tracking-widest text-[10px] md:text-xs">
+              {activeTab === 'superfiesta' ? 'SuperFiesta' : 
+               activeTab === 'sora' ? 'Sora' : 
+               activeTab === 'prompt_ai' ? 'Prompt AI' : 'Image Gen'}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <button
               onClick={() => setIsFullScreen(!isFullScreen)}
-              className="text-sm font-medium border border-[#ff4d4d] bg-[#ff4d4d]/10 hover:bg-[#ff4d4d]/30 text-[#ff4d4d] px-4 py-1.5 rounded-lg flex items-center gap-2 transition-colors shadow-[0_0_10px_rgba(255,77,77,0.2)]">
-              <Maximize size={14} /> {isFullScreen ? "Exit Full Screen" : "Full Screen Mode"}
+              className="text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-accent/30 bg-accent/5 hover:bg-accent/20 text-accent px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-accent/5">
+              <Maximize size={14} className="hidden sm:block" /> {isFullScreen ? "Contract" : "Full Screen"}
             </button>
-            <button className="text-sm font-medium border border-[#333] hover:bg-[#222] px-4 py-1.5 rounded-lg flex items-center gap-2 transition-colors text-gray-300">
-              <RefreshCw size={14} className="text-[#ff4d4d]" /> Rotate Tokens
+            <button className="text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-panel-border hover:border-accent hover:bg-accent/5 px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-muted hover:text-accent hidden sm:flex">
+              <RefreshCw size={14} className="text-accent" /> Rotate Keys
             </button>
           </div>
         </header>
 
-        {activeTab === 'superfiesta' ? (
-          <>
-            <div
-              ref={chatContainerRef}
-              className="flex-1 overflow-y-auto w-full relative custom-scrollbar p-4 md:p-6 pb-48"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[600px] max-w-[1800px] mx-auto">
-                {MODEL_BRANDS.map(brand => (
-                  <AIColumn
-                    key={brand.brandId}
-                    brand={brand}
-                    messages={columnMessages[brand.brandId]}
-                    selectedModelId={selectedModels[brand.brandId]}
-                    onModelChange={(newModelId) => handleModelChange(brand.brandId, newModelId)}
-                    isEnabled={enabledModels[brand.brandId]}
-                    onToggleEnabled={() => setEnabledModels(p => ({ ...p, [brand.brandId]: !p[brand.brandId] }))}
-                    isStreaming={isStreaming}
-                    rank={rankings.length > 0 ? (rankings.indexOf(brand.brandId) !== -1 ? rankings.indexOf(brand.brandId) + 1 : null) : null}
-                    onRegenerate={(msgId) => handleRegenerate(brand.brandId, msgId)}
-                    onClearColumn={() => handleClearColumn(brand.brandId)}
-                    userStatus={userStatus}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="absolute bottom-6 left-0 w-full flex flex-col items-center justify-center px-4 z-30 pointer-events-none gap-4">
-              {/* Reuse existing inputs for SuperFiesta */}
-              {!isStreaming && columnMessages[MODEL_BRANDS[0].brandId].length > 0 && (
-                <div className="flex gap-4">
-                  {rankings.length === 0 && (
-                    <button
-                      onClick={handleRank}
-                      className="bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white px-6 py-2.5 rounded-full font-medium shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all flex items-center gap-2 pointer-events-auto active:scale-95"
-                    >
-                      <Trophy size={16} /> AI Battle Evaluation
-                    </button>
-                  )}
-                  <button
-                    onClick={handleMerge}
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-6 py-2.5 rounded-full font-medium shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all flex items-center gap-2 pointer-events-auto active:scale-95"
-                  >
-                    <Sparkles size={16} /> Merge Best Answers
-                  </button>
+        <div className={`flex-1 flex flex-col min-h-0 relative ${activeTab === 'superfiesta' ? 'liquid-mesh' : ''}`}>
+            {activeTab === 'superfiesta' ? (
+            <>
+                <div
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto w-full relative custom-scrollbar p-3 md:p-6 pb-48"
+                >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 auto-rows-[500px] md:auto-rows-[600px] max-w-[1800px] mx-auto">
+                    {MODEL_BRANDS.map(brand => (
+                    <AIColumn
+                        key={brand.brandId}
+                        brand={brand}
+                        messages={columnMessages[brand.brandId]}
+                        selectedModelId={selectedModels[brand.brandId]}
+                        onModelChange={(newModelId) => handleModelChange(brand.brandId, newModelId)}
+                        isEnabled={enabledModels[brand.brandId]}
+                        onToggleEnabled={() => setEnabledModels(p => ({ ...p, [brand.brandId]: !p[brand.brandId] }))}
+                        isStreaming={isStreaming}
+                        rank={rankings.length > 0 ? (rankings.indexOf(brand.brandId) !== -1 ? rankings.indexOf(brand.brandId) + 1 : null) : null}
+                        onRegenerate={(msgId) => handleRegenerate(brand.brandId, msgId)}
+                        onClearColumn={() => handleClearColumn(brand.brandId)}
+                        userStatus={userStatus}
+                    />
+                    ))}
                 </div>
-              )}
-
-              <div className="w-full max-w-2xl glass-panel rounded-2xl p-3 shadow-2xl pointer-events-auto">
-                <div className="flex items-center gap-3">
-                  <div className="flex bg-[#1a1a1a] rounded-lg p-1">
-                    <button
-                      onClick={() => toggleTier("Flash")}
-                      className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${currentTier === "Flash" ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-                    >
-                      Fast Mode
-                    </button>
-                    <button
-                      onClick={() => toggleTier("Pro")}
-                      className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${currentTier === "Pro" ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-                    >
-                      Best Mode
-                    </button>
-                  </div>
                 </div>
 
-                <div className="mt-3 relative">
-                  {(() => {
-                    return (
-                      <>
-                        <textarea
-                          value={prompt}
-                          onChange={(e) => {
-                            setPrompt(e.target.value);
-                            e.target.style.height = 'auto';
-                            e.target.style.height = `${e.target.scrollHeight}px`;
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendPrompt();
-                            }
-                          }}
-                          placeholder={isStreaming ? "Generating response..." : "Ask Super AI anything..."}
-                          className="w-full bg-transparent text-white placeholder-gray-500 resize-none outline-none max-h-48 min-h-[50px] pr-12 overflow-y-auto"
-                          rows={1}
-                          disabled={isStreaming}
-                        />
-                        <div className="absolute right-2 bottom-2">
-                          <button
-                            onClick={() => handleSendPrompt()}
-                            disabled={!prompt.trim() || isStreaming}
-                            className={`p-2 rounded-lg transition-colors bg-white text-black hover:bg-gray-200 disabled:opacity-50`}
-                          >
-                            <Sparkles size={18} />
-                          </button>
-                        </div>
-                      </>
-                    );
-                  })()}
+                <div className="absolute bottom-6 left-0 w-full flex flex-col items-center justify-center px-4 z-30 pointer-events-none gap-4">
+                {!isStreaming && columnMessages[MODEL_BRANDS[0].brandId].length > 0 && (
+                    <div className="flex gap-4">
+                    {rankings.length === 0 && (
+                        <button
+                        onClick={handleRank}
+                        className="bg-gradient-to-r from-orange-600 to-amber-600 hover:scale-105 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 transition-all flex items-center gap-3 pointer-events-auto active:scale-95"
+                        >
+                        <Trophy size={16} /> Battle Evaluation
+                        </button>
+                    )}
+                    <button
+                        onClick={handleMerge}
+                        className="bg-gradient-to-r from-accent to-primary hover:scale-105 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-accent/30 transition-all flex items-center gap-3 pointer-events-auto active:scale-95"
+                    >
+                        <Sparkles size={16} /> Merge Insights
+                    </button>
+                    </div>
+                )}
+
+                <div className="w-full max-w-4xl glass-panel !bg-background/40 backdrop-blur-3xl rounded-3xl md:rounded-[2.5rem] p-3 md:p-5 shadow-2xl pointer-events-auto border border-panel-border glow-accent group focus-within:border-accent/40 transition-all duration-500 scale-in-center">
+                    <div className="flex items-center gap-3 mb-3 px-2">
+                    <div className="flex rounded-full p-1 border font-black bg-white/5 border-white/5">
+                        <button
+                        onClick={() => toggleTier("Flash")}
+                        className={`text-[9px] uppercase tracking-widest px-5 py-2 rounded-full transition-all ${currentTier === "Flash" ? 'bg-white text-black shadow-xl' : 'text-muted hover:text-foreground'}`}
+                        >
+                        Flash
+                        </button>
+                        <button
+                        onClick={() => toggleTier("Pro")}
+                        className={`text-[9px] uppercase tracking-widest px-5 py-2 rounded-full transition-all ${currentTier === "Pro" ? 'bg-accent text-white shadow-xl shadow-accent/20' : 'text-muted hover:text-foreground'}`}
+                        >
+                        Pro
+                        </button>
+                    </div>
+                    </div>
+
+                    <div className="relative px-2 flex items-end gap-3">
+                    <textarea
+                        value={prompt}
+                        onChange={(e) => {
+                        setPrompt(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                        }}
+                        onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendPrompt();
+                        }
+                        }}
+                        placeholder={isStreaming ? "Synthesizing intelligence..." : "Ask anything..."}
+                        className="flex-1 bg-transparent text-foreground placeholder-muted resize-none outline-none max-h-48 min-h-[40px] md:min-h-[50px] py-2 md:py-3 overflow-y-auto font-semibold md:font-bold text-sm md:text-lg leading-relaxed px-1"
+                        rows={1}
+                        disabled={isStreaming}
+                    />
+                    <button
+                        onClick={() => handleSendPrompt()}
+                        disabled={!prompt.trim() || isStreaming}
+                        className={`p-4 rounded-3xl transition-all duration-500 mb-1 ${prompt.trim() ? 'bg-accent text-white shadow-xl shadow-accent/40 scale-110 rotate-0' : 'bg-panel-border text-muted grayscale'}`}
+                    >
+                        {isStreaming ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} />}
+                    </button>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <SoraMode />
-        )}
+                </div>
+            </>
+            ) : activeTab === 'sora' ? (
+            <SoraMode />
+            ) : activeTab === 'prompt_ai' ? (
+            <PromptMode />
+            ) : (
+            <ImageMode />
+            )}
+        </div>
       </main>
+
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
     </div>
   );
 }

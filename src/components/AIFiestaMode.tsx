@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Trophy, Send, RotateCcw } from "lucide-react";
+import { Sparkles, Trophy, Send, RotateCcw, Brain, Zap, Swords, Merge, Loader2 } from "lucide-react";
 import { AIBrand, ChatMessage, FIESTA_MODEL_BRANDS as MODEL_BRANDS } from "@/types";
 import AIColumn from "./AIColumn";
 
@@ -57,16 +57,16 @@ export default function AIFiestaMode({
         }
     };
 
-    // The wheel scrolling logic has been moved to onWheelCapture on the div itself to ensure it always fires
-
     return (
-        <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-black">
+        <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-colors duration-500 bg-black">
+            <div className="absolute inset-0 liquid-mesh opacity-30 pointer-events-none" />
+            
             {/* Vertical Scrollable AI Cards Grid */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto w-full relative custom-scrollbar p-4 md:p-6 pb-48"
+                className="flex-1 overflow-y-auto w-full relative hide-scrollbar p-6 md:p-10 pb-64 z-10"
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[600px] max-w-[1800px] mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 auto-rows-[650px] max-w-[2400px] mx-auto scale-in-center">
                     {MODEL_BRANDS.map(brand => (
                         <AIColumn
                             key={brand.brandId}
@@ -86,54 +86,61 @@ export default function AIFiestaMode({
             </div>
 
             {/* Floating UI Elements */}
-            <div className="absolute bottom-10 left-0 w-full flex flex-col items-center justify-center px-4 z-40 pointer-events-none gap-6">
+            <div className="absolute bottom-10 left-0 w-full flex flex-col items-center justify-center px-6 z-40 pointer-events-none gap-8">
 
                 {/* Generate Consensus / AI Battle Buttons */}
                 {!isStreaming && columnMessages[MODEL_BRANDS[0].brandId]?.length > 0 && (
-                    <div className="flex gap-4 pointer-events-auto">
+                    <div className="flex flex-wrap justify-center gap-4 pointer-events-auto animate-float">
                         {rankings.length === 0 && (
                             <button
                                 onClick={onRank}
-                                className="bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white px-8 py-3 rounded-full font-bold shadow-[0_0_30px_rgba(217,119,6,0.3)] transition-all flex items-center gap-2 active:scale-95 text-sm uppercase tracking-wider"
+                                className="bg-accent text-white px-10 py-4 rounded-3xl font-semibold shadow-2xl active:scale-95 transition-all flex items-center gap-3 text-xs tracking-[0.2em] border border-white/10 hover:rotate-1"
                             >
-                                <Trophy size={18} /> AI Battle Evaluation
+                                <Swords size={20} /> Neural Battle Evaluation
                             </button>
                         )}
                         <button
                             onClick={onMerge}
-                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-10 py-3 rounded-full font-bold shadow-[0_0_30px_rgba(147,51,234,0.3)] transition-all flex items-center gap-3 active:scale-95 text-sm uppercase tracking-wider"
+                            className="px-10 py-4 rounded-3xl font-semibold shadow-2xl active:scale-95 transition-all flex items-center gap-3 text-xs tracking-[0.2em] border border-white/10 hover:-rotate-1 bg-white text-black"
                         >
-                            <Sparkles size={18} /> Generate Consensus
+                            <Merge size={20} /> Synthesize Consensus
                         </button>
                     </div>
                 )}
 
                 {/* Floating Question Box */}
-                <div className="w-full max-w-3xl glass-panel rounded-[24px] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 pointer-events-auto transform transition-all hover:scale-[1.01]">
-                    <div className="flex items-center gap-3">
+                <div className="w-full max-w-4xl glass-panel rounded-[3rem] p-6 shadow-2xl border-2 border-panel-border pointer-events-auto transition-all backdrop-blur-3xl group">
+                    <div className="flex flex-col md:flex-row items-center gap-6 mb-4">
                         {/* Fast/Moderate/Best Mode Toggle */}
-                        <div className="flex bg-[#111] border border-white/10 p-1.5 rounded-full shadow-2xl pointer-events-auto">
+                        <div className="flex bg-foreground/5 p-1.5 rounded-[2rem] border-2 border-panel-border shadow-inner pointer-events-auto">
                             <button
                                 onClick={() => toggleTier("Pro")}
-                                className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${currentTier === "Pro" ? "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]" : "text-gray-500 hover:text-white"}`}
+                                className={`px-8 py-2.5 rounded-[1.5rem] text-[10px] font-semibold tracking-widest transition-all ${currentTier === "Pro" ? "bg-accent text-white shadow-xl scale-105" : "text-muted hover:text-foreground"}`}
                             >
-                                BEST
+                                Intelligence
                             </button>
                             <button
                                 onClick={() => toggleTier("Moderate")}
-                                className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${currentTier === "Moderate" ? "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]" : "text-gray-500 hover:text-white"}`}
+                                className={`px-8 py-2.5 rounded-[1.5rem] text-[10px] font-semibold tracking-widest transition-all ${currentTier === "Moderate" ? "bg-accent text-white shadow-xl scale-105" : "text-muted hover:text-foreground"}`}
                             >
-                                MODERATE
+                                Balanced
                             </button>
                             <button
                                 onClick={() => toggleTier("Flash")}
-                                className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${currentTier === "Flash" ? "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]" : "text-gray-500 hover:text-white"}`}
+                                className={`px-8 py-2.5 rounded-[1.5rem] text-[10px] font-semibold tracking-widest transition-all ${currentTier === "Flash" ? "bg-accent text-white shadow-xl scale-105" : "text-muted hover:text-foreground"}`}
                             >
-                                FAST
+                                Velocity
                             </button>
                         </div>
+                        <div className="hidden md:flex flex-1 items-center gap-2 px-4 border-l border-panel-border">
+                            <Brain size={16} className="text-accent" />
+                            <span className="text-[10px] font-semibold text-muted tracking-[0.2em]">6x Parallel Processing Active</span>
+                        </div>
                     </div>
-                    <div className="relative flex items-center gap-3">
+                    <div className="relative flex items-center gap-4">
+                        <div className={`p-4 rounded-3xl transition-all ${isStreaming ? 'bg-accent/20 text-accent animate-pulse' : 'bg-foreground/5 text-muted'}`}>
+                            <Zap size={24} />
+                        </div>
                         <textarea
                             ref={textareaRef}
                             value={prompt}
@@ -143,17 +150,17 @@ export default function AIFiestaMode({
                                 e.target.style.height = `${e.target.scrollHeight}px`;
                             }}
                             onKeyDown={handleKeyDown}
-                            placeholder="Ask AI Fiesta anything..."
-                            className="w-full bg-transparent text-white placeholder-gray-500 resize-none outline-none max-h-48 min-h-[50px] py-2 px-1 text-lg leading-relaxed hide-scrollbar"
+                            placeholder="Initialize Multi-Model Uplink..."
+                            className="w-full bg-transparent text-foreground placeholder-muted resize-none outline-none max-h-48 min-h-[60px] py-3 px-1 text-xl font-semibold leading-relaxed hide-scrollbar"
                             rows={1}
                             disabled={isStreaming}
                         />
                         <button
                             onClick={handleSend}
                             disabled={!prompt.trim() || isStreaming}
-                            className="bg-[#ff4d4d] text-white p-3.5 rounded-2xl hover:bg-[#ff6666] transition-all shadow-[0_0_20px_rgba(255,77,77,0.3)] disabled:opacity-50 active:scale-90 shrink-0"
+                            className={`p-6 rounded-[2rem] transition-all duration-500 shadow-2xl active:scale-90 shrink-0 ${prompt.trim() && !isStreaming ? 'bg-accent text-white shadow-accent/40 scale-105' : 'bg-muted/20 text-muted grayscale'}`}
                         >
-                            <Send size={24} />
+                            {isStreaming ? <Loader2 size={28} className="animate-spin" /> : <Send size={28} />}
                         </button>
                     </div>
                 </div>
