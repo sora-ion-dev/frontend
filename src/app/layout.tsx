@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://superai-new.vercel.app"),
+  metadataBase: new URL("https://sora-ion-ai.vercel.app"),
   title: "Super AI | Compare and Battle Global LLMs",
   description: "Experience the world's most powerful AI models in one place. Compare Gemini, ChatGPT, Claude, and DeepSeek for free with real-time evaluation and routing.",
   verification: {
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Super AI | Compare Global LLMs",
     description: "Battle and Evaluate AI models side-by-side.",
-    url: "https://superai-new.vercel.app",
+    url: "https://sora-ion-ai.vercel.app",
     siteName: "Super AI",
     images: [
       {
