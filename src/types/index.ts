@@ -16,7 +16,6 @@ export interface AIBrand {
     models: AIModel[];
 }
 
-// Model Mappings exactly from Hugging Face Router API, OpenRouter, and GitHub
 export const MODEL_BRANDS: AIBrand[] = [
     {
         brandId: "openai",
@@ -26,9 +25,7 @@ export const MODEL_BRANDS: AIBrand[] = [
         logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
         color: "#10a37f",
         models: [
-            { id: "gpt-4o", name: "GPT-4o (Omni)", tier: "Pro" },
             { id: "gpt-4o-mini", name: "GPT-4o Mini", tier: "Moderate" },
-            { id: "gpt-4o-mini", name: "GPT-4o Mini (Fast)", tier: "Flash" },
         ],
     },
     {
@@ -39,9 +36,7 @@ export const MODEL_BRANDS: AIBrand[] = [
         logo: "https://api.iconify.design/logos:anthropic-icon.svg",
         color: "#cc8b6e",
         models: [
-            { id: "arcee-ai/trinity-large-preview:free", name: "Claude 3.5 Sonnet", tier: "Pro" },
             { id: "arcee-ai/trinity-mini:free", name: "Claude 3 Opus", tier: "Moderate" },
-            { id: "arcee-ai/trinity-mini:free", name: "Claude 3 Haiku", tier: "Flash" },
         ],
     },
     {
@@ -52,9 +47,7 @@ export const MODEL_BRANDS: AIBrand[] = [
         logo: "https://upload.wikimedia.org/wikipedia/commons/4/4d/DeepSeek_logo.svg",
         color: "#4d6edb",
         models: [
-            { id: "openrouter/auto", name: "DeepSeek V3", tier: "Pro" },
             { id: "openrouter/auto", name: "DeepSeek R1", tier: "Moderate" },
-            { id: "openrouter/auto", name: "DeepSeek Chat", tier: "Flash" },
         ],
     },
     {
@@ -65,9 +58,7 @@ export const MODEL_BRANDS: AIBrand[] = [
         logo: "https://github.com/Qwen.png",
         color: "#4a90e2",
         models: [
-            { id: "Qwen/Qwen2.5-7B-Instruct", name: "Qwen 2.5 7B", tier: "Pro" },
             { id: "Qwen/Qwen2.5-3B-Instruct", name: "Qwen 2.5 3B", tier: "Moderate" },
-            { id: "Qwen/Qwen2.5-1.5B-Instruct", name: "Qwen 2.5 1.5B", tier: "Flash" },
         ],
     },
     {
@@ -78,9 +69,7 @@ export const MODEL_BRANDS: AIBrand[] = [
         logo: "https://api.iconify.design/logos:meta-icon.svg",
         color: "#1877F2",
         models: [
-            { id: "meta-llama/Llama-3.1-8B-Instruct", name: "Llama 3.1 8B", tier: "Pro" },
             { id: "meta-llama/Llama-3.2-3B-Instruct", name: "Llama 3.2 3B", tier: "Moderate" },
-            { id: "meta-llama/Llama-3.2-1B-Instruct", name: "Llama 3.2 1B", tier: "Flash" },
         ],
     },
     {
@@ -91,9 +80,7 @@ export const MODEL_BRANDS: AIBrand[] = [
         logo: "https://upload.wikimedia.org/wikipedia/commons/8/87/Google_Gemini_logo_2025.svg",
         color: "#4285F4",
         models: [
-            { id: "google/gemma-2-27b-it", name: "Gemini 3.2 Pro", tier: "Pro" },
             { id: "google/gemma-2-9b-it", name: "Gemini 3.2 Flash", tier: "Moderate" },
-            { id: "google/gemma-2-2b-it", name: "Gemini 3.1 Medium", tier: "Flash" },
         ],
     },
 ];

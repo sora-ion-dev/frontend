@@ -65,19 +65,13 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                     <div className="flex flex-col flex-1 min-w-0">
                         <div className="flex items-center gap-3">
                             {renderLogo()}
-                            <div className="relative group flex-1 min-w-0">
-                                <select
-                                    value={selectedModelId}
-                                    onChange={(e) => onModelChange(e.target.value)}
-                                    className="appearance-none bg-transparent text-sm font-semibold text-foreground w-full truncate cursor-pointer outline-none pe-6 tracking-tight"
-                                >
-                                    {brand.models.map(m => (
-                                        <option key={`${m.id}-${m.tier}`} value={m.id} className="bg-background text-foreground">
-                                            {m.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={14} className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-muted group-hover:text-accent transition-colors" />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm font-bold text-foreground truncate tracking-tight">
+                                    {selectedModel.name}
+                                </div>
+                                <div className="text-[10px] text-muted font-medium truncate tracking-tight uppercase">
+                                    {brand.realBrandName}
+                                </div>
                             </div>
                         </div>
                     </div>

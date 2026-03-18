@@ -59,20 +59,6 @@ export default function Home() {
     return initial;
   });
 
-  const [currentTier, setCurrentTier] = useState<"Flash" | "Moderate" | "Pro">("Flash");
-
-  const toggleTier = (tier: "Flash" | "Moderate" | "Pro") => {
-    setCurrentTier(tier);
-    setSelectedModels(prev => {
-      const next = { ...prev };
-      MODEL_BRANDS.forEach(brand => {
-        const model = brand.models.find(m => m.tier === tier) || brand.models[0];
-        next[brand.brandId] = model.id;
-      });
-      return next;
-    });
-  };
-
   const [columnMessages, setColumnMessages] = useState<Record<string, ChatMessage[]>>(() => {
     const initial: Record<string, ChatMessage[]> = {};
     MODEL_BRANDS.forEach(brand => {
@@ -677,21 +663,8 @@ export default function Home() {
                 )}
 
                 <div className="w-full max-w-4xl glass-panel !bg-background/40 backdrop-blur-3xl rounded-3xl md:rounded-[2.5rem] p-3 md:p-5 shadow-2xl pointer-events-auto border border-panel-border glow-accent group focus-within:border-accent/40 transition-all duration-500 scale-in-center">
-                    <div className="flex items-center gap-3 mb-3 px-2">
-                    <div className="flex rounded-full p-1 border font-black bg-white/5 border-white/5">
-                        <button
-                        onClick={() => toggleTier("Flash")}
-                        className={`text-[9px] uppercase tracking-widest px-5 py-2 rounded-full transition-all ${currentTier === "Flash" ? 'bg-white text-black shadow-xl' : 'text-muted hover:text-foreground'}`}
-                        >
-                        Flash
-                        </button>
-                        <button
-                        onClick={() => toggleTier("Pro")}
-                        className={`text-[9px] uppercase tracking-widest px-5 py-2 rounded-full transition-all ${currentTier === "Pro" ? 'bg-accent text-white shadow-xl shadow-accent/20' : 'text-muted hover:text-foreground'}`}
-                        >
-                        Pro
-                        </button>
-                    </div>
+                    <div className="flex items-center gap-3 mb-1 px-2">
+                      <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] px-1">Unified Intelligence Mode</span>
                     </div>
 
                     <div className="relative px-2 flex items-end gap-3">
