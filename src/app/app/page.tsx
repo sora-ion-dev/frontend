@@ -6,8 +6,9 @@ import { AIBrand, ChatMessage, MODEL_BRANDS } from "@/types";
 import AIColumn from "@/components/AIColumn";
 import SoraMode from "@/components/SoraMode";
 import PromptMode from "@/components/PromptMode";
-import ImageMode from "@/components/ImageMode";
+import PlaySora from "@/components/PlaySora";
 import SettingsModal from "@/components/SettingsModal";
+import { FIESTA_MODEL_BRANDS } from "@/types";
 
 export default function Home() {
   const session = { user: { email: "public-user", name: "Guest" } }; // Dummy session for public access
@@ -22,7 +23,8 @@ export default function Home() {
   const [rankings, setRankings] = useState<string[]>([]);
   const [personality, setPersonality] = useState("Professional");
   const [webSearch, setWebSearch] = useState(false);
-  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "image_gen">("superfiesta"); 
+  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "play_sora">("superfiesta"); 
+  const [globalTier, setGlobalTier] = useState<"Flash" | "Pro">("Flash");
 
   useEffect(() => {
     const loadSettings = () => {
@@ -208,7 +210,7 @@ export default function Home() {
     }
 
     // Add user message to all ENABLED columns and initialize a generic empty assistant message
-    const activeBrands = MODEL_BRANDS;
+    const activeBrands = FIESTA_MODEL_BRANDS;
     setColumnMessages(prev => {
       const next = { ...prev };
       activeBrands.forEach(brand => {
@@ -237,7 +239,8 @@ export default function Home() {
 
     const promises = effectiveModels.map(brand => {
       const exactMsgId = `assistant-${brand.brandId}-${userMsgId}`;
-      return streamResponse(brand.brandId, userPrompt, selectedModels[brand.brandId], exactMsgId);
+      const selectedModelId = brand.models.find(m => m.tier === globalTier)?.id || brand.models[0].id;
+      return streamResponse(brand.brandId, userPrompt, selectedModelId, exactMsgId);
     });
 
     await Promise.all(promises);
@@ -245,7 +248,7 @@ export default function Home() {
   };
 
   const handleRank = async () => {
-    const activeBrands = MODEL_BRANDS;
+    const activeBrands = FIESTA_MODEL_BRANDS;
     const answers: Record<string, string> = {};
     activeBrands.forEach(brand => {
       const msgs = columnMessages[brand.brandId];
@@ -283,7 +286,7 @@ export default function Home() {
   };
 
   const handleMerge = async () => {
-    const activeBrands = MODEL_BRANDS;
+    const activeBrands = FIESTA_MODEL_BRANDS;
     const answers = activeBrands.map(brand => {
       const msgs = columnMessages[brand.brandId];
       const lastMsg = msgs[msgs.length - 1];
@@ -510,11 +513,11 @@ export default function Home() {
               />
             <NavItem
               icon={<Layers size={18} className="text-purple-400" />}
-              label="Image Generator"
+              label="PlaySora"
               isOpen={sidebarOpen}
-                active={activeTab === 'image_gen'}
+                active={activeTab === 'play_sora'}
                 onClick={() => {
-                    setActiveTab('image_gen');
+                    setActiveTab('play_sora');
                     if (window.innerWidth < 768) setSidebarOpen(false);
                 }}
               />
@@ -597,7 +600,7 @@ export default function Home() {
             <span className="font-black text-foreground uppercase tracking-widest text-[10px] md:text-xs">
               {activeTab === 'superfiesta' ? 'SuperFiesta' : 
                activeTab === 'sora' ? 'Sora' : 
-               activeTab === 'prompt_ai' ? 'Prompt AI' : 'Image Gen'}
+               activeTab === 'prompt_ai' ? 'Prompt AI' : 'PlaySora'}
             </span>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
@@ -623,13 +626,13 @@ export default function Home() {
                 className="flex-1 overflow-y-auto w-full relative custom-scrollbar p-3 md:p-6 pb-48"
                 >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 auto-rows-[500px] md:auto-rows-[600px] max-w-[1800px] mx-auto">
-                    {MODEL_BRANDS.map(brand => (
+                    {FIESTA_MODEL_BRANDS.map(brand => (
                     <AIColumn
                         key={brand.brandId}
                         brand={brand}
                         messages={columnMessages[brand.brandId]}
-                        selectedModelId={selectedModels[brand.brandId]}
-                        onModelChange={(newModelId) => handleModelChange(brand.brandId, newModelId)}
+                        selectedModelId={brand.models.find(m => m.tier === globalTier)?.id || brand.models[0].id}
+                        onModelChange={() => {}} // Tier controlled globally now
                         isEnabled={enabledModels[brand.brandId]}
                         onToggleEnabled={() => setEnabledModels(p => ({ ...p, [brand.brandId]: !p[brand.brandId] }))}
                         isStreaming={isStreaming}
@@ -643,7 +646,7 @@ export default function Home() {
                 </div>
 
                 <div className="absolute bottom-6 left-0 w-full flex flex-col items-center justify-center px-4 z-30 pointer-events-none gap-4">
-                {!isStreaming && columnMessages[MODEL_BRANDS[0].brandId].length > 0 && (
+                {!isStreaming && columnMessages[FIESTA_MODEL_BRANDS[0].brandId].length > 0 && (
                     <div className="flex gap-4">
                     {rankings.length === 0 && (
                         <button
@@ -663,8 +666,22 @@ export default function Home() {
                 )}
 
                 <div className="w-full max-w-4xl glass-panel !bg-background/40 backdrop-blur-3xl rounded-3xl md:rounded-[2.5rem] p-3 md:p-5 shadow-2xl pointer-events-auto border border-panel-border glow-accent group focus-within:border-accent/40 transition-all duration-500 scale-in-center">
-                    <div className="flex items-center gap-3 mb-1 px-2">
+                    <div className="flex items-center gap-3 mb-1 px-2 justify-between w-full">
                       <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] px-1">Unified Intelligence Mode</span>
+                      <div className="flex items-center gap-2 bg-panel-border/30 p-1 rounded-xl border border-panel-border">
+                        <button 
+                            onClick={() => setGlobalTier("Flash")}
+                            className={`flex items-center gap-2 px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${globalTier === 'Flash' ? 'bg-accent text-white' : 'text-muted hover:text-foreground'}`}
+                        >
+                            Flash
+                        </button>
+                        <button 
+                            onClick={() => setGlobalTier("Pro")}
+                            className={`flex items-center gap-2 px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${globalTier === 'Pro' ? 'bg-orange-600 text-white' : 'text-muted hover:text-foreground'}`}
+                        >
+                            Pro
+                        </button>
+                      </div>
                     </div>
 
                     <div className="relative px-2 flex items-end gap-3">
@@ -702,7 +719,7 @@ export default function Home() {
             ) : activeTab === 'prompt_ai' ? (
             <PromptMode />
             ) : (
-            <ImageMode />
+            <PlaySora />
             )}
         </div>
       </main>

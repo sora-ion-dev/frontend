@@ -16,6 +16,7 @@ export default function PromptMode() {
     const [prompt, setPrompt] = useState("");
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [tier, setTier] = useState<"Flash" | "Pro">("Flash");
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
@@ -64,6 +65,7 @@ export default function PromptMode() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     prompt: currentPrompt,
+                    tier: tier,
                     image_base64: currentImage,
                     user_email: "public-user"
                 })
@@ -212,6 +214,20 @@ export default function PromptMode() {
                             className="flex-1 bg-transparent text-foreground placeholder-muted outline-none resize-none py-3 text-base font-medium"
                             rows={1}
                         />
+                        <div className="flex items-center gap-2 bg-panel-border/30 p-1 rounded-2xl border border-panel-border mr-1">
+                            <button 
+                                onClick={() => setTier("Flash")}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${tier === "Flash" ? "bg-accent text-white shadow-lg" : "text-muted hover:text-foreground"}`}
+                            >
+                                Flash
+                            </button>
+                            <button 
+                                onClick={() => setTier("Pro")}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${tier === "Pro" ? "bg-orange-600 text-white shadow-lg" : "text-muted hover:text-foreground"}`}
+                            >
+                                Pro
+                            </button>
+                        </div>
                         <button 
                             onClick={handleSend}
                             disabled={(!prompt.trim() && !selectedImage) || isLoading}
