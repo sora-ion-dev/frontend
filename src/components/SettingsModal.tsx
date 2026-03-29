@@ -12,7 +12,7 @@ interface SettingsModalProps {
     onClose: () => void;
 }
 
-type Tab = "general" | "appearance" | "intelligence" | "keys";
+type Tab = "general" | "ai" | "profile";
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     const [activeTab, setActiveTab] = useState<Tab>("general");
@@ -55,220 +55,134 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
     const tabs = [
         { id: "general", label: "General", icon: Settings },
-        { id: "intelligence", label: "AI Intelligence", icon: Brain },
-        { id: "keys", label: "API Keys", icon: Key },
+        { id: "ai", label: "AI Preferences", icon: Sparkles },
+        { id: "profile", label: "Profile", icon: Briefcase },
     ];
 
-    const personas = [
-        { id: "Coding Expert", icon: Code, desc: "Technical, precise, and logic-driven" },
-        { id: "Creative Spark", icon: Sparkles, desc: "Imaginative, poetic, and boundary-pushing" },
-        { id: "Professional", icon: Briefcase, desc: "Balanced, formal, and efficient" },
-        { id: "Deep Analyst", icon: BarChart4, desc: "Research-heavy and multi-perspective" }
-    ];
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-black/60 backdrop-blur-xl transition-opacity animate-fade-in"
-                onClick={onClose}
-            />
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-xl transition-opacity animate-fade-in" onClick={onClose} />
 
-            {/* Modal Container */}
-            <div className="relative w-full max-w-5xl h-[700px] flex overflow-hidden glass-panel rounded-[3rem] animate-scale-in duration-500 shadow-[0_0_100px_rgba(0,0,0,0.5)] border-2 border-panel-border bg-black/90">
+            <div className="relative w-full max-w-6xl h-[80vh] flex overflow-hidden rounded-[2.5rem] animate-scale-in duration-500 shadow-3xl border border-white/5 bg-[#0a0a0a]">
                 
-                {/* Sidebar */}
-                <div className="w-72 flex flex-col p-8 border-r-2 border-white/5 bg-white/5">
-                    <div className="flex items-center gap-4 mb-12 px-2">
-                        <div className="p-3 bg-accent/20 rounded-2xl text-accent shadow-lg shadow-accent/20">
-                            <Settings size={24} className="animate-spin-slow" />
+                {/* Sidebar Navigation */}
+                <div className="w-72 flex flex-col p-8 border-r border-white/5 bg-black/20">
+                    <div className="flex items-center gap-3 mb-12">
+                        <div className="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center text-accent">
+                            <Brain size={24} />
                         </div>
-                        <h2 className="font-black text-2xl tracking-tighter uppercase italic">Control</h2>
+                        <h2 className="text-xl font-black tracking-tight text-white uppercase italic">Fiesta Pro</h2>
                     </div>
 
                     <nav className="flex-1 space-y-2">
-                        {[
-                            { id: "general", label: "General", icon: Settings },
-                            { id: "intelligence", label: "AI Intelligence", icon: Brain },
-                            { id: "keys", label: "API Keys", icon: Key },
-                        ].map((tab) => {
+                        {tabs.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as Tab)}
-                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 text-xs font-black uppercase tracking-widest ${
-                                        isActive 
-                                        ? "bg-accent text-white shadow-2xl shadow-accent/40 scale-105" 
-                                        : "hover:bg-white/5 text-muted"
-                                    }`}
+                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${isActive ? "bg-white text-black font-black uppercase tracking-widest text-[10px]" : "hover:bg-white/5 text-muted font-bold text-[11px] uppercase tracking-widest"}`}
                                 >
-                                    <Icon size={20} />
+                                    <Icon size={18} />
                                     {tab.label}
                                 </button>
                             );
                         })}
                     </nav>
 
-                    <div className="mt-auto px-4 py-6 rounded-3xl bg-accent/5 border border-accent/10">
-                        <p className="text-[9px] uppercase tracking-[0.3em] font-black text-accent mb-3">Neural Status</p>
-                        <div className="flex items-center gap-3 text-[10px] text-foreground font-black uppercase tracking-tighter">
-                            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-                            Core Link Optimal
+                    <div className="mt-auto p-6 bg-accent/5 rounded-[2rem] border border-accent/10">
+                        <div className="flex items-center gap-3">
+                            <div className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
+                            <span className="text-[10px] font-black uppercase text-accent tracking-widest">Neural Sync Optimized</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Content Area */}
-                <div className="flex-1 flex flex-col">
-                    <div className="p-6 flex justify-end">
-                        <button 
-                            onClick={onClose}
-                            className="p-3 rounded-2xl transition-all duration-300 active:scale-90 hover:bg-white/5 text-muted hover:text-white"
-                        >
+                {/* Settings Content Area */}
+                <div className="flex-1 flex flex-col bg-[#111111]">
+                    <div className="p-6 flex justify-between items-center border-b border-white/5 bg-black/20">
+                        <h3 className="text-sm font-black uppercase tracking-[0.3em] text-white/40 ml-4">Configuration Core</h3>
+                        <button onClick={onClose} className="p-3 rounded-2xl hover:bg-white/5 text-muted transition-all">
                             <X size={24} />
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto hide-scrollbar p-12 pt-0">
+                    <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
                         {activeTab === "general" && (
-                            <div className="space-y-10 animate-fade-in">
+                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
                                 <div>
-                                    <h3 className="text-4xl font-black mb-3 tracking-tighter uppercase">General Params</h3>
-                                    <p className="text-muted text-sm font-bold uppercase tracking-widest leading-relaxed">System architecture and local configurations</p>
-                                </div>
-                                
-                                <div className="space-y-4">
-                                    <div className="p-6 rounded-[2rem] glass-thin border-2 border-panel-border flex items-center justify-between group hover:border-accent/30 transition-all">
-                                        <div>
-                                            <p className="font-black text-sm uppercase tracking-widest mb-1">UI Language</p>
-                                            <p className="text-xs text-muted font-bold">Localization protocol for neural interface</p>
-                                        </div>
-                                        <select 
-                                            value={language}
-                                            onChange={(e) => updateLanguage(e.target.value)}
-                                            className="bg-foreground/5 p-3 px-6 rounded-2xl text-xs font-black uppercase tracking-widest border-none outline-none cursor-pointer focus:ring-2 ring-accent/20 transition-all text-white"
-                                        >
-                                            <option>English (US)</option>
-                                            <option>Hindi (Beta)</option>
-                                            <option>Español</option>
-                                            <option>日本語</option>
-                                        </select>
-                                    </div>
-                                    <div className="p-6 rounded-[2rem] glass-thin border-2 border-panel-border flex items-center justify-between group hover:border-accent/30 transition-all">
-                                        <div>
-                                            <p className="font-black text-sm uppercase tracking-widest mb-1">Entity Synchronization</p>
-                                            <p className="text-xs text-muted font-bold">Current account authority level</p>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="px-5 py-2 bg-accent text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-accent/20">Pro Architect</span>
-                                            <span className="text-[10px] font-black text-green-500 uppercase">Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === "intelligence" && (
-                            <div className="space-y-10 animate-fade-in">
-                                <div>
-                                    <h3 className="text-4xl font-black mb-3 tracking-tighter uppercase">AI Persona</h3>
-                                    <p className="text-muted text-sm font-bold uppercase tracking-widest leading-relaxed">Cognitive personality frameworks and data access</p>
-                                </div>
-
-                                <div className="space-y-8">
-                                    <div className="p-8 rounded-[2.5rem] glass-thin border-2 border-panel-border space-y-6">
-                                        <p className="font-black text-xs uppercase tracking-[0.3em] text-accent">Personality Matrix</p>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            {personas.map((p) => {
-                                                const Icon = p.icon;
-                                                const isActive = persona === p.id;
-                                                return (
-                                                    <button 
-                                                        key={p.id} 
-                                                        onClick={() => updatePersona(p.id)}
-                                                        className={`flex flex-col gap-3 p-6 rounded-3xl transition-all duration-300 text-left border-2 group ${
-                                                            isActive 
-                                                            ? "bg-accent/10 border-accent shadow-xl" 
-                                                            : "bg-foreground/5 border-transparent hover:border-panel-border"
-                                                        }`}
-                                                    >
-                                                        <div className="flex items-center justify-between">
-                                                            <div className={`p-3 rounded-xl transition-all ${isActive ? 'bg-accent text-white shadow-lg shadow-accent/30' : 'bg-foreground/10 text-muted group-hover:text-foreground'}`}>
-                                                                <Icon size={20} />
-                                                            </div>
-                                                            {isActive && <Check size={16} className="text-accent" />}
-                                                        </div>
-                                                        <div>
-                                                            <p className={`font-black text-xs uppercase tracking-tight mb-1 ${isActive ? 'text-accent' : 'text-foreground'}`}>{p.id}</p>
-                                                            <p className="text-[10px] text-muted font-bold leading-tight">{p.desc}</p>
-                                                        </div>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-
-                                    <div 
-                                        onClick={toggleWebSearch}
-                                        className={`p-8 rounded-[2.5rem] glass-thin border-2 flex items-center justify-between cursor-pointer group transition-all duration-500 ${webSearch ? 'border-accent shadow-2xl shadow-accent/10' : 'border-panel-border hover:border-accent/20'}`}
-                                    >
-                                        <div className="flex items-center gap-6">
-                                            <div className={`p-5 rounded-[1.5rem] transition-all duration-500 ${webSearch ? 'bg-accent text-white shadow-2xl shadow-accent/40 rotate-12 scale-110' : 'bg-foreground/10 text-muted grayscale'}`}>
-                                                <Globe size={28} className={webSearch ? 'animate-spin-slow' : ''} />
-                                            </div>
-                                            <div>
-                                                <p className="font-black text-lg uppercase tracking-widest mb-1">Global Web Insight</p>
-                                                <p className="text-xs text-muted font-bold uppercase tracking-tighter">Real-time data fetching via Tavily Neural Network</p>
-                                            </div>
-                                        </div>
-                                        <div className={`w-16 h-8 rounded-full flex items-center px-1.5 transition-all duration-500 ${webSearch ? 'bg-accent shadow-lg shadow-accent/40' : 'bg-foreground/10'}`}>
-                                            <div className={`w-5 h-5 bg-white rounded-full transition-all duration-500 shadow-xl ${webSearch ? 'translate-x-8' : 'translate-x-0'}`} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === "keys" && (
-                            <div className="space-y-10 animate-fade-in">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-4xl font-black mb-3 tracking-tighter uppercase">Neural Keys</h3>
-                                        <p className="text-muted text-sm font-bold uppercase tracking-widest leading-relaxed">Secure protocol access to AI distributed clusters</p>
-                                    </div>
-                                    <div className="flex items-center gap-3 p-3 bg-green-500/10 text-green-500 rounded-2xl border border-green-500/20 text-[10px] font-black uppercase tracking-widest animate-pulse">
-                                        <ShieldCheck size={18} />
-                                        Hardware Level Encryption
-                                    </div>
+                                    <h4 className="text-4xl font-black mb-4 tracking-tighter">General Params</h4>
+                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">System-wide interface and neural protocol settings</p>
                                 </div>
 
                                 <div className="space-y-6">
+                                    <div className="p-8 bg-black/40 border border-white/5 rounded-[2.5rem] flex items-center justify-between">
+                                        <div>
+                                            <p className="font-black text-xs uppercase tracking-widest mb-1">Appearance Mode</p>
+                                            <p className="text-[10px] text-white/30 font-bold">Customize the visual theme of the neural interface</p>
+                                        </div>
+                                        <div className="flex bg-white/5 p-1 rounded-full border border-white/5">
+                                            {['System', 'Light', 'Dark'].map(m => (
+                                                <button key={m} className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${m === 'Dark' ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}>{m}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-8 bg-black/40 border border-white/5 rounded-[2.5rem] flex items-center justify-between">
+                                        <div>
+                                            <p className="font-black text-xs uppercase tracking-widest mb-1">Interface Language</p>
+                                            <p className="text-[10px] text-white/30 font-bold">Primary localization for synthetic responses</p>
+                                        </div>
+                                        <select className="bg-white/5 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 outline-none text-white appearance-none cursor-pointer">
+                                            <option>English (Global)</option>
+                                            <option>Hindi (Localized)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "ai" && (
+                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                <div>
+                                    <h4 className="text-4xl font-black mb-4 tracking-tighter">AI Preferences</h4>
+                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Rank and prioritize your 15-model neural cluster</p>
+                                </div>
+
+                                <div className="space-y-4">
                                     {[
-                                        { name: "Groq LPU Interface", status: "Validated" },
-                                        { name: "NVIDIA NIM Core", status: "Active" },
-                                        { name: "Tavily Search Engine", status: "Synced" }
-                                    ].map((k) => (
-                                        <div key={k.name} className="p-8 rounded-[2.5rem] glass-thin border-2 border-panel-border group hover:border-accent/30 transition-all space-y-5 shadow-sm">
-                                            <div className="flex items-center justify-between">
-                                                <p className="font-black text-xs uppercase tracking-[0.2em] group-hover:text-accent transition-all">{k.name}</p>
-                                                <span className="flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                                    <p className="text-[10px] text-green-500 font-black uppercase tracking-widest">{k.status}</p>
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-4">
-                                                <div className="flex-1 relative group/key">
-                                                    <input 
-                                                        type="password" 
-                                                        value="x-superai-neural-protocol-key-shielded-x" 
-                                                        readOnly
-                                                        className="w-full bg-foreground/5 p-4 pl-6 rounded-2xl text-[10px] font-mono border-2 border-panel-border outline-none tracking-[0.5em] focus:border-accent transition-all" 
-                                                    />
+                                        { name: 'GPT-4o Pro', brand: 'OpenAI', toggle: true },
+                                        { name: 'Claude 3.5 Sonnet', brand: 'Anthropic', toggle: true },
+                                        { name: 'DeepSeek R1', brand: 'DeepSeek', toggle: false },
+                                        { name: 'Moonshot Kimi K2', brand: 'Moonshot AI', toggle: true },
+                                    ].map((m, i) => (
+                                        <div key={m.name} className="p-6 bg-black/40 border border-white/5 rounded-3xl flex items-center justify-between group hover:border-accent/20 transition-all">
+                                            <div className="flex items-center gap-6">
+                                                <div className="text-white/20 group-hover:text-accent transition-colors">
+                                                    <div className="grid grid-cols-2 gap-0.5">
+                                                        <div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" />
+                                                        <div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" />
+                                                        <div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" />
+                                                    </div>
                                                 </div>
-                                                <button className="px-8 py-4 bg-foreground/10 hover:bg-accent hover:text-white rounded-[1.5rem] text-[10px] font-black transition-all uppercase tracking-widest shadow-xl active:scale-95">
-                                                    Update Identity
+                                                <div className="w-10 h-10 bg-white rounded-xl p-2 flex items-center justify-center">
+                                                    <span className="text-black font-black text-xs">{m.name[0]}</span>
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-xs uppercase tracking-widest leading-none mb-1">{m.name}</p>
+                                                    <p className="text-[10px] text-white/30 font-bold uppercase tracking-tighter">{m.brand} • Distributed Link</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-8">
+                                                <select className="bg-transparent text-[10px] font-black uppercase tracking-widest text-white/40 outline-none border-b border-white/10 pb-1">
+                                                    <option>v1.5 Pro</option>
+                                                    <option>Turbo Flux</option>
+                                                </select>
+                                                <button className={`w-12 h-6 rounded-full flex items-center px-1 transition-all ${m.toggle ? 'bg-accent' : 'bg-white/10'}`}>
+                                                    <div className={`w-4 h-4 bg-white rounded-full transition-all ${m.toggle ? 'translate-x-6' : 'translate-x-0'}`} />
                                                 </button>
                                             </div>
                                         </div>
@@ -276,6 +190,35 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                 </div>
                             </div>
                         )}
+
+                        {activeTab === "profile" && (
+                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                <div>
+                                    <h4 className="text-4xl font-black mb-4 tracking-tighter">Identity Core</h4>
+                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Manage your neural identity and authentication</p>
+                                </div>
+
+                                <div className="p-10 bg-black/40 border border-white/5 rounded-[3rem] flex items-center gap-8">
+                                    <div className="w-24 h-24 bg-accent rounded-full flex items-center justify-center text-4xl font-black text-white shadow-2xl shadow-accent/20">
+                                        JD
+                                    </div>
+                                    <div className="flex-1">
+                                        <h5 className="text-2xl font-black text-white mb-1">John Doe</h5>
+                                        <p className="text-white/30 font-bold uppercase tracking-widest text-[10px] mb-4">Pro Architect • ID: 7749-SX</p>
+                                        <div className="flex gap-3">
+                                            <button className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Edit ID</button>
+                                            <button className="px-6 py-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">Revoke Access</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="p-8 border-t border-white/5 flex justify-end bg-black/20">
+                        <button onClick={onClose} className="px-10 py-4 bg-white text-black rounded-full text-xs font-black uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-xl shadow-white/5">
+                            Update Preferences
+                        </button>
                     </div>
                 </div>
             </div>

@@ -1,24 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
 :root {
-  /* Common */
-  --font-outfit: "Outfit", sans-serif;
-  
-  /* Dark Theme (Default) */
-  --background: #050505;
-  --foreground: #f8fafc;
-  --panel: #0a0a0a;
-  --panel-border: rgba(255, 255, 255, 0.05);
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --accent-faded: rgba(99, 102, 241, 0.1);
-  --glass: rgba(10, 10, 10, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --primary: #8b5cf6;
-  --secondary: #ec4899;
-  --card-bg: rgba(255, 255, 255, 0.02);
-  --text-muted: #94a3b8;
+  /* Original Super AI Colors */
+  --background: #000000;
+  --foreground: #ffffff;
+  --panel: #121212;
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --accent: #22c55e;
+  --accent-faded: rgba(34, 197, 94, 0.1);
+  --glass: rgba(0, 0, 0, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-muted: #a1a1aa;
+  --radius-xl: 1.5rem;   /* 24px */
+  --radius-3xl: 2rem;   /* 32px */
 }
 
 @theme {
@@ -27,24 +23,24 @@
   --color-panel: var(--panel);
   --color-panel-border: var(--panel-border);
   --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-faded: var(--accent-faded);
-  --color-glass: var(--glass);
-  --color-glass-border: var(--glass-border);
-  --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
-  --color-card: var(--card-bg);
   --color-muted: var(--text-muted);
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-outfit), "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Original Grid Pattern */
+.grid-bg-fiesta {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
 /* Custom scrollbar */
@@ -81,16 +77,6 @@ body {
   border: 1px solid var(--glass-border);
 }
 
-@utility liquid-mesh {
-  background: var(--background);
-  background-image: 
-    radial-gradient(at 0% 0%, var(--color-accent-faded) 0, transparent 50%), 
-    radial-gradient(at 100% 0%, var(--color-primary) 0, transparent 40%),
-    radial-gradient(at 100% 100%, var(--color-secondary) 0, transparent 40%),
-    radial-gradient(at 0% 100%, var(--color-primary) 0, transparent 40%);
-  background-attachment: fixed;
-}
-
 @utility message-bubble-ai {
   background: transparent;
   border: none;
@@ -105,7 +91,13 @@ body {
   border-radius: 1.5rem;
 }
 
-/* Animations */
+@utility hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* Initial animations */
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-5px); }
@@ -114,20 +106,4 @@ body {
 
 @utility animate-float {
   animation: float 6s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0% { box-shadow: 0 0 5px var(--accent-faded); }
-  50% { box-shadow: 0 0 20px var(--accent-faded); }
-  100% { box-shadow: 0 0 5px var(--accent-faded); }
-}
-
-@utility glow-pulse {
-  animation: pulse-glow 3s infinite;
-}
-
-@utility hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
 }

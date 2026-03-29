@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain } from "lucide-react";
-import { AIBrand, ChatMessage, MODEL_BRANDS } from "@/types";
+import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain, Zap, Send, Image as ImageIcon, Plus } from "lucide-react";
+import { AIBrand, ChatMessage, MODEL_BRANDS, FIESTA_BRAND_IDS } from "@/types";
 import AIColumn from "@/components/AIColumn";
 import SoraMode from "@/components/SoraMode";
 import PromptMode from "@/components/PromptMode";
 import PlaySora from "@/components/PlaySora";
+import AIFiestaMode from "@/components/AIFiestaMode";
 import SettingsModal from "@/components/SettingsModal";
-import { FIESTA_MODEL_BRANDS } from "@/types";
 
 export default function Home() {
   const session = { user: { email: "public-user", name: "Guest" } }; // Dummy session for public access
@@ -23,8 +23,7 @@ export default function Home() {
   const [rankings, setRankings] = useState<string[]>([]);
   const [personality, setPersonality] = useState("Professional");
   const [webSearch, setWebSearch] = useState(false);
-  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "play_sora">("superfiesta"); 
-  const [globalTier, setGlobalTier] = useState<"Flash" | "Pro">("Flash");
+  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "play_sora">("superfiesta");
 
   useEffect(() => {
     const loadSettings = () => {
@@ -37,7 +36,7 @@ export default function Home() {
     loadSettings();
     window.addEventListener("storage", loadSettings);
     window.addEventListener("settingsChanged", loadSettings);
-    
+
     return () => {
       window.removeEventListener("storage", loadSettings);
       window.removeEventListener("settingsChanged", loadSettings);
@@ -48,7 +47,7 @@ export default function Home() {
   const [enabledModels, setEnabledModels] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     MODEL_BRANDS.forEach(brand => {
-      initial[brand.brandId] = true;
+      initial[brand.id] = true;
     });
     return initial;
   });
@@ -56,7 +55,7 @@ export default function Home() {
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     MODEL_BRANDS.forEach(brand => {
-      initial[brand.brandId] = brand.models[0].id;
+      initial[brand.id] = brand.id;
     });
     return initial;
   });
@@ -64,7 +63,7 @@ export default function Home() {
   const [columnMessages, setColumnMessages] = useState<Record<string, ChatMessage[]>>(() => {
     const initial: Record<string, ChatMessage[]> = {};
     MODEL_BRANDS.forEach(brand => {
-      initial[brand.brandId] = [];
+      initial[brand.id] = [];
     });
     return initial;
   });
@@ -92,8 +91,6 @@ export default function Home() {
     }
   };
 
-  // The wheel scrolling logic has been moved to onWheelCapture on the div itself to ensure it always fires
-
   const handleModelChange = (brandId: string, newModelId: string) => {
     setSelectedModels(prev => ({ ...prev, [brandId]: newModelId }));
   };
@@ -101,13 +98,12 @@ export default function Home() {
   const streamResponse = async (brandId: string, userPrompt: string, selectedModelId: string, assistantMsgId: string) => {
     try {
       const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-      // Read latest settings right before sending
       const currentPersona = localStorage.getItem("superai_persona") || "Professional";
       const currentWebSearch = localStorage.getItem("superai_websearch") === "true";
 
       const res = await fetch(`${BACKEND_URL}/chat/stream`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "x-user-email": session?.user?.email || "unknown"
         },
@@ -145,13 +141,10 @@ export default function Home() {
                 const data = JSON.parse(line.substring(6));
                 if (data.chunk) {
                   fullText += data.chunk;
-
-                  // Update UI with the chunk
                   setColumnMessages(prev => {
                     const next = { ...prev };
                     const messages = next[brandId];
                     const msgIndex = messages.findIndex(m => m.id === assistantMsgId);
-
                     if (msgIndex !== -1) {
                       messages[msgIndex] = { ...messages[msgIndex], content: fullText };
                       next[brandId] = [...messages];
@@ -167,7 +160,6 @@ export default function Home() {
         }
       }
 
-      // Stop streaming animation
       setColumnMessages(prev => {
         const next = { ...prev };
         const messages = next[brandId];
@@ -198,33 +190,33 @@ export default function Home() {
     if (!userPrompt.trim() || isStreaming) return;
 
     setIsStreaming(true);
-    setRankings([]); // clear previous rankings
+    setRankings([]);
     if (!customPrompt) setPrompt("");
 
     const userMsgId = Date.now().toString();
     const newUserMessage: ChatMessage = { id: userMsgId, role: "user", content: userPrompt };
 
-    // Update history only for SuperFiesta Mode
     if (activeTab === "superfiesta") {
       setFiestaHistory(prev => [{ id: userMsgId, prompt: userPrompt, timestamp: Date.now() }, ...prev]);
     }
 
-    // Add user message to all ENABLED columns and initialize a generic empty assistant message
-    const activeBrands = FIESTA_MODEL_BRANDS;
+    const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
+
     setColumnMessages(prev => {
       const next = { ...prev };
-      activeBrands.forEach(brand => {
-        const isEnabled = targetModels ? targetModels.includes(brand.brandId) : enabledModels[brand.brandId];
-        if (isEnabled) {
-          const assistantMsgId = `assistant-${brand.brandId}-${userMsgId}`;
-          next[brand.brandId] = [
-            ...next[brand.brandId],
+      fiestaBrands.forEach((brand: AIBrand) => {
+        const assistantMsgId = `assistant-${brand.id}-${userMsgId}`;
+        const isTargeted = targetModels ? targetModels.includes(brand.id) : enabledModels[brand.id];
+
+        if (isTargeted) {
+          next[brand.id] = [
+            ...next[brand.id],
             newUserMessage,
             { id: assistantMsgId, role: "assistant", content: "", isStreaming: true }
           ];
         } else {
-          next[brand.brandId] = [
-            ...next[brand.brandId],
+          next[brand.id] = [
+            ...next[brand.id],
             newUserMessage
           ];
         }
@@ -232,15 +224,14 @@ export default function Home() {
       return next;
     });
 
-    // Launch streams ONLY for enabled models!
     const effectiveModels = targetModels
-      ? activeBrands.filter(b => targetModels.includes(b.brandId))
-      : activeBrands.filter(b => enabledModels[b.brandId]);
+      ? fiestaBrands.filter(b => targetModels.includes(b.brandId))
+      : fiestaBrands.filter(b => enabledModels[b.brandId]);
 
     const promises = effectiveModels.map(brand => {
-      const exactMsgId = `assistant-${brand.brandId}-${userMsgId}`;
-      const selectedModelId = brand.models.find(m => m.tier === globalTier)?.id || brand.models[0].id;
-      return streamResponse(brand.brandId, userPrompt, selectedModelId, exactMsgId);
+      const exactMsgId = `assistant-${brand.id}-${userMsgId}`;
+      const selectedModelId = selectedModels[brand.id] || brand.id;
+      return streamResponse(brand.id, userPrompt, selectedModelId, exactMsgId);
     });
 
     await Promise.all(promises);
@@ -248,13 +239,13 @@ export default function Home() {
   };
 
   const handleRank = async () => {
-    const activeBrands = FIESTA_MODEL_BRANDS;
+    const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
     const answers: Record<string, string> = {};
-    activeBrands.forEach(brand => {
-      const msgs = columnMessages[brand.brandId];
+    fiestaBrands.forEach(brand => {
+      const msgs = columnMessages[brand.id];
       const lastMsg = msgs[msgs.length - 1];
       if (lastMsg?.role === "assistant") {
-        answers[brand.brandId] = lastMsg.content;
+        answers[brand.id] = lastMsg.content;
       }
     });
 
@@ -264,12 +255,12 @@ export default function Home() {
       const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const res = await fetch(`${BACKEND_URL}/chat/rank`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "x-user-email": session?.user?.email || "unknown"
         },
         body: JSON.stringify({
-          original_prompt: columnMessages[activeBrands[0].brandId].find(m => m.role === "user")?.content || "Rate the answers",
+          original_prompt: columnMessages[fiestaBrands[0].id]?.find(m => m.role === "user")?.content || "Rate the answers",
           answers: answers,
           user_email: session?.user?.email || "unknown"
         })
@@ -286,9 +277,9 @@ export default function Home() {
   };
 
   const handleMerge = async () => {
-    const activeBrands = FIESTA_MODEL_BRANDS;
-    const answers = activeBrands.map(brand => {
-      const msgs = columnMessages[brand.brandId];
+    const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
+    const answers = fiestaBrands.map(brand => {
+      const msgs = columnMessages[brand.id];
       const lastMsg = msgs[msgs.length - 1];
       return lastMsg?.role === "assistant" ? lastMsg.content : "";
     }).filter(a => a.length > 0);
@@ -298,10 +289,10 @@ export default function Home() {
     const newId = Date.now().toString();
     setColumnMessages(prev => {
       const next = { ...prev };
-      activeBrands.forEach(brand => {
-        next[brand.brandId] = [
-          ...next[brand.brandId],
-          { id: `merge-${brand.brandId}-${newId}`, role: "assistant", content: "", isStreaming: true }
+      fiestaBrands.forEach(brand => {
+        next[brand.id] = [
+          ...next[brand.id],
+          { id: `merge-${brand.id}-${newId}`, role: "assistant", content: "", isStreaming: true }
         ];
       });
       return next;
@@ -311,12 +302,12 @@ export default function Home() {
       const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const res = await fetch(`${BACKEND_URL}/chat/merge`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "x-user-email": session?.user?.email || "unknown"
         },
         body: JSON.stringify({
-          original_prompt: columnMessages[MODEL_BRANDS[0].brandId].find(m => m.role === "user")?.content || "Merged user prompt",
+          original_prompt: columnMessages[fiestaBrands[0].id]?.find(m => m.role === "user")?.content || "Merged user prompt",
           answers: answers,
           user_email: session?.user?.email || "unknown"
         })
@@ -347,12 +338,12 @@ export default function Home() {
                   fullText += data.chunk;
                   setColumnMessages(prev => {
                     const next = { ...prev };
-                    activeBrands.forEach(brand => {
-                      const msgs = next[brand.brandId];
-                      const msgIndex = msgs.findIndex(m => m.id === `merge-${brand.brandId}-${newId}`);
+                    fiestaBrands.forEach(brand => {
+                      const msgs = next[brand.id];
+                      const msgIndex = msgs.findIndex(m => m.id === `merge-${brand.id}-${newId}`);
                       if (msgIndex !== -1) {
                         msgs[msgIndex] = { ...msgs[msgIndex], content: fullText };
-                        next[brand.brandId] = [...msgs];
+                        next[brand.id] = [...msgs];
                       }
                     });
                     return next;
@@ -369,11 +360,11 @@ export default function Home() {
       setColumnMessages(prev => {
         const next = { ...prev };
         MODEL_BRANDS.forEach(brand => {
-          const msgs = next[brand.brandId];
-          const msgIndex = msgs.findIndex(m => m.id === `merge-${brand.brandId}-${newId}`);
+          const msgs = next[brand.id];
+          const msgIndex = msgs.findIndex(m => m.id === `merge-${brand.id}-${newId}`);
           if (msgIndex !== -1) {
             msgs[msgIndex] = { ...msgs[msgIndex], isStreaming: false };
-            next[brand.brandId] = [...msgs];
+            next[brand.id] = [...msgs];
           }
         });
         return next;
@@ -398,337 +389,193 @@ export default function Home() {
     if (msgIdx > 0) {
       const userMsg = msgs[msgIdx - 1];
       if (userMsg && userMsg.role === "user") {
-        setColumnMessages(prev => {
-          const next = { ...prev };
-          next[brandId][msgIdx].content = "";
-          next[brandId][msgIdx].isStreaming = true;
-          return next;
-        });
-        streamResponse(brandId, userMsg.content, selectedModels[brandId], msgId);
+        handleSendPrompt(userMsg.content, [brandId]);
       }
     }
   };
 
-  // Helper for Navigation
-  function NavItem({ icon, label, isOpen, active = false, onClick, href, className }: { icon: React.ReactNode, label: string, isOpen: boolean, active?: boolean, onClick?: () => void, href?: string, className?: string }) {
-    const isSoraLocked = false; // Limits removed
-
-    const content = (
-      <div className="flex flex-1 items-center justify-between">
-        <span className="font-bold text-sm">{label}</span>
-        {isSoraLocked && <span className="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">PRO</span>}
-      </div>
-    );
-
-    if (href) {
-        return (
-            <a
-                href={href}
-                className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-300 ${active ? 'bg-accent text-white shadow-lg' : 'text-muted hover:text-foreground hover:bg-card'} ${!isOpen ? 'justify-center md:flex hidden' : ''} ${className || ""}`}
-            >
-                {icon}
-                {isOpen && content}
-            </a>
-        );
+  const toggleSettings = () => setIsSettingsOpen(!isSettingsOpen);
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullScreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullScreen(false);
     }
-
-    return (
-      <button
-        onClick={label === "Sora Mode" && isSoraLocked ? undefined : onClick}
-        className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-300 ${active ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'text-muted hover:text-foreground hover:bg-card'} ${!isOpen ? 'justify-center md:flex hidden' : ''} ${isSoraLocked ? 'opacity-30 cursor-not-allowed' : ''} ${className || ""}`}
-      >
-        {icon}
-        {isOpen && content}
-      </button>
-    );
-  }
+  };
 
   return (
-    <div className="flex h-screen w-full transition-colors duration-500 overflow-hidden selection:bg-accent/30 bg-black">
-      {/* Mobile Sidebar Overlay */}
+    <div className="flex h-screen bg-[#0a0a1a] text-white font-sans overflow-hidden">
+      {/* Sidebar Overlay (mobile) */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside
-        className={`${isFullScreen ? 'hidden' : (sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full md:w-22 md:translate-x-0 md:opacity-100')} 
-        transition-all duration-500 ease-in-out border-r border-panel-border glass-panel flex flex-col justify-between shrink-0 z-50 fixed md:relative h-full ${!sidebarOpen ? 'pointer-events-none md:pointer-events-auto' : ''}`}
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transition-transform duration-300 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:relative md:translate-x-0`}
+        style={{ background: "linear-gradient(180deg, #12123a 0%, #0d0d2e 40%, #0a0a1a 100%)", borderRight: "1px solid rgba(100,80,200,0.15)" }}
       >
-        <div className="p-4 flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            {sidebarOpen && (
-              <h1 className="text-2xl font-black tracking-tighter text-foreground flex items-center gap-2 px-2">
-                <img src="/logo.png" alt="Super AI Logo" className="w-8 h-8 rounded-lg" />
-                SUPER AI
-              </h1>
-            )}
-            {!sidebarOpen && (
-              <div className="mx-auto hidden md:block">
-                <img src="/logo.png" alt="Super AI Logo" className="w-9 h-9 rounded-lg" />
-              </div>
-            )}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-muted hover:text-foreground md:hidden">
-              <X size={20} />
-            </button>
+        {/* Logo */}
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)" }}>
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
-
-          <button
-            onClick={() => {
-              const initial: Record<string, ChatMessage[]> = {};
-              MODEL_BRANDS.forEach(brand => {
-                initial[brand.brandId] = [];
-              });
-              setColumnMessages(initial);
-              setRankings([]);
-            }}
-            className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-2xl font-bold transition-all shadow-lg shadow-accent/20 active:scale-95">
-            <MessageSquarePlus size={18} />
-            {sidebarOpen && <span>New Conversation</span>}
+          <h1 className="text-xl font-black tracking-tight text-white">SUPER AI</h1>
+          <button className="ml-auto md:hidden text-white/40 hover:text-white" onClick={() => setSidebarOpen(false)}>
+            <X className="w-5 h-5" />
           </button>
-
-          <nav className="flex flex-col gap-1.5 mt-2">
-            <NavItem icon={<Search size={18} />} label="Search" isOpen={sidebarOpen} />
-            <NavItem
-              icon={<Sparkles size={18} className="text-orange-400" />}
-              label="SuperFiesta Mode"
-              isOpen={sidebarOpen}
-                active={activeTab === 'superfiesta'}
-                onClick={() => {
-                    setActiveTab('superfiesta');
-                    if (window.innerWidth < 768) setSidebarOpen(false);
-                }}
-              />
-            <NavItem
-              icon={<Sparkles size={18} className="text-indigo-400" />}
-              label="Sora Mode"
-              isOpen={sidebarOpen}
-                active={activeTab === 'sora'}
-                onClick={() => {
-                    setActiveTab('sora');
-                    if (window.innerWidth < 768) setSidebarOpen(false);
-                }}
-              />
-            <NavItem
-              icon={<Layers size={18} className="text-purple-400" />}
-              label="PlaySora"
-              isOpen={sidebarOpen}
-                active={activeTab === 'play_sora'}
-                onClick={() => {
-                    setActiveTab('play_sora');
-                    if (window.innerWidth < 768) setSidebarOpen(false);
-                }}
-              />
-            <NavItem
-              icon={<Brain size={18} className="text-blue-400" />}
-              label="Prompt AI"
-              isOpen={sidebarOpen}
-                active={activeTab === 'prompt_ai'}
-                onClick={() => {
-                    setActiveTab('prompt_ai');
-                    if (window.innerWidth < 768) setSidebarOpen(false);
-                }}
-              />
-            <NavItem
-              icon={<Shield size={18} className="text-red-400" />}
-              label="Admin Panel"
-              isOpen={sidebarOpen}
-              href="/admin"
-            />
-          </nav>
         </div>
 
-        <div className="p-4 border-t border-panel-border overflow-hidden flex flex-col min-h-0">
-          {sidebarOpen && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              <div className="flex items-center gap-2 mb-3 text-muted">
-                <HistoryIcon size={14} />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Recents</span>
-              </div>
-              <div className="flex-1 overflow-y-auto pr-2 space-y-1 mb-4 hide-scrollbar">
-                {fiestaHistory.length === 0 ? (
-                  <div className="text-[10px] text-muted/50 italic px-2 font-bold">No threads yet</div>
-                ) : (
-                  fiestaHistory.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setPrompt(item.prompt);
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs text-muted hover:bg-card hover:text-foreground transition-all truncate font-bold"
-                    >
-                      {item.prompt}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-          
-          <NavItem 
-            icon={<Settings size={18} />} 
-            label="Settings" 
-            isOpen={sidebarOpen} 
-            onClick={() => setIsSettingsOpen(true)}
-            className={!sidebarOpen ? 'md:flex hidden' : ''}
-          />
+        {/* New Conversation */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => {
+              MODEL_BRANDS.forEach(brand => {
+                setColumnMessages(prev => ({ ...prev, [brand.id]: [] }));
+              });
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90 active:scale-95"
+            style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)", boxShadow: "0 4px 20px rgba(108,99,255,0.4)" }}
+          >
+            <MessageSquarePlus className="w-4 h-4" /> New Conversation
+          </button>
+        </div>
 
-          <div className={`mt-2 pt-3 border-t border-panel-border flex items-center gap-3 ${sidebarOpen ? '' : 'justify-center'}`}>
-            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent shrink-0 animate-float">
-                <Sparkles size={16} />
+        {/* Search */}
+        <div className="px-4 pb-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" size={14} />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-white/20 outline-none focus:border-purple-500/40 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <button
+            onClick={() => setActiveTab("superfiesta")}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "superfiesta" ? "text-white" : "text-white/40 hover:text-white hover:bg-white/5"}`}
+            style={activeTab === "superfiesta" ? { background: "linear-gradient(135deg, #6c63ff33, #a855f733)", border: "1px solid rgba(108,99,255,0.3)" } : {}}
+          >
+            <Sparkles size={18} className={activeTab === "superfiesta" ? "text-[#a855f7]" : ""} />
+            SuperFiesta Mode
+          </button>
+
+          <button
+            onClick={() => setActiveTab("play_sora")}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "play_sora" ? "text-white" : "text-white/40 hover:text-white hover:bg-white/5"}`}
+            style={activeTab === "play_sora" ? { background: "linear-gradient(135deg, #6c63ff33, #a855f733)", border: "1px solid rgba(108,99,255,0.3)" } : {}}
+          >
+            <Zap size={18} className={activeTab === "play_sora" ? "text-[#6c63ff]" : ""} />
+            Sora Mode
+          </button>
+
+          <button
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <ImageIcon size={18} />
+            Image Generator
+          </button>
+
+          <button
+            onClick={() => setActiveTab("prompt_ai")}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "prompt_ai" ? "text-white" : "text-white/40 hover:text-white hover:bg-white/5"}`}
+            style={activeTab === "prompt_ai" ? { background: "linear-gradient(135deg, #6c63ff33, #a855f733)", border: "1px solid rgba(108,99,255,0.3)" } : {}}
+          >
+            <Brain size={18} className={activeTab === "prompt_ai" ? "text-[#a855f7]" : ""} />
+            Prompt AI
+          </button>
+
+          <button
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <Shield size={18} />
+            Admin Panel
+          </button>
+
+          {/* RECENTS */}
+          <div className="pt-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/20 px-4 pb-2">Recents</p>
+            <p className="text-xs text-white/20 italic px-4">No threads yet</p>
+          </div>
+        </nav>
+
+        {/* Bottom: Settings + User */}
+        <div className="p-4 border-t border-white/5 space-y-2">
+          <button
+            onClick={toggleSettings}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <Settings size={18} />
+            Settings
+          </button>
+
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)" }}>
+              {session?.user?.name?.substring(0, 1) || "N"}
             </div>
-            {sidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-black text-foreground truncate uppercase tracking-tighter">Premium Access</p>
-                <p className="text-[10px] text-muted truncate font-bold uppercase">Sora-ion Mode</p>
-              </div>
-            )}
+            <div className="flex-1 overflow-hidden">
+              <p className="text-xs font-black text-white truncate">PREMIUM ACCESS</p>
+              <p className="text-[10px] text-white/30 truncate">SORA-ION MODE</p>
+            </div>
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-        <header className="h-16 border-b border-panel-border glass-panel backdrop-blur-xl flex items-center justify-between px-4 md:px-6 z-10 shrink-0">
-          <div className="flex items-center gap-3 md:gap-4">
-            {!isFullScreen && (
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-muted hover:text-foreground p-2 -ml-2">
-                <Menu size={20} />
-              </button>
-            )}
-            <span className="font-black text-foreground uppercase tracking-widest text-[10px] md:text-xs">
-              {activeTab === 'superfiesta' ? 'SuperFiesta' : 
-               activeTab === 'sora' ? 'Sora' : 
-               activeTab === 'prompt_ai' ? 'Prompt AI' : 'PlaySora'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="md:hidden">
-              <img src="/logo.png" alt="Logo" className="w-6 h-6 rounded-md" />
-            </div>
-            <button
-              onClick={() => setIsFullScreen(!isFullScreen)}
-              className="text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-accent/30 bg-accent/5 hover:bg-accent/20 text-accent px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-accent/5">
-              <Maximize size={14} className="hidden sm:block" /> {isFullScreen ? "Contract" : "Full Screen"}
+      {/* Main Content Area */}
+      <main className="flex-1 relative flex flex-col h-full overflow-hidden" style={{ background: "#0a0a1a" }}>
+        {/* Header */}
+        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 z-40" style={{ background: "rgba(10,10,26,0.8)", backdropFilter: "blur(20px)" }}>
+          <div className="flex items-center gap-4">
+            <button className="md:hidden text-white/40 hover:text-white" onClick={() => setSidebarOpen(true)}>
+              <Menu className="w-6 h-6" />
             </button>
-            <button className="text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-panel-border hover:border-accent hover:bg-accent/5 px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-muted hover:text-accent hidden sm:flex">
-              <RefreshCw size={14} className="text-accent" /> Rotate Keys
+            <h2 className="text-sm font-black tracking-[0.2em] uppercase text-white/60">
+              {activeTab === "superfiesta" ? "SuperFiesta Mode" : activeTab === "play_sora" ? "Sora Mode" : activeTab === "prompt_ai" ? "Prompt AI" : activeTab.replace("_", " ")}
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button onClick={toggleFullScreen} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-white hover:bg-white/5 border border-white/10 transition-all">
+              <Maximize className="w-4 h-4" /> Full Screen
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-white hover:bg-white/5 border border-white/10 transition-all">
+              <RefreshCw className="w-4 h-4" /> Rotate Keys
             </button>
           </div>
         </header>
 
-        <div className={`flex-1 flex flex-col min-h-0 relative ${activeTab === 'superfiesta' ? 'liquid-mesh' : ''}`}>
-            {activeTab === 'superfiesta' ? (
-            <>
-                <div
-                ref={chatContainerRef}
-                className="flex-1 overflow-y-auto w-full relative custom-scrollbar p-3 md:p-6 pb-48"
-                >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 auto-rows-[500px] md:auto-rows-[600px] max-w-[1800px] mx-auto">
-                    {FIESTA_MODEL_BRANDS.map(brand => (
-                    <AIColumn
-                        key={brand.brandId}
-                        brand={brand}
-                        messages={columnMessages[brand.brandId]}
-                        selectedModelId={brand.models.find(m => m.tier === globalTier)?.id || brand.models[0].id}
-                        onModelChange={() => {}} // Tier controlled globally now
-                        isEnabled={enabledModels[brand.brandId]}
-                        onToggleEnabled={() => setEnabledModels(p => ({ ...p, [brand.brandId]: !p[brand.brandId] }))}
-                        isStreaming={isStreaming}
-                        rank={rankings.length > 0 ? (rankings.indexOf(brand.brandId) !== -1 ? rankings.indexOf(brand.brandId) + 1 : null) : null}
-                        onRegenerate={(msgId) => handleRegenerate(brand.brandId, msgId)}
-                        onClearColumn={() => handleClearColumn(brand.brandId)}
-                        userStatus={userStatus}
-                    />
-                    ))}
-                </div>
-                </div>
+        {/* Tab Content */}
+        <section className="flex-1 overflow-hidden relative">
+          {activeTab === "play_sora" && <PlaySora />}
+          {activeTab === "superfiesta" && (
+            <AIFiestaMode
+              onSendPrompt={handleSendPrompt}
+              columnMessages={columnMessages}
+              selectedModels={selectedModels}
+              onModelChange={handleModelChange}
+              isStreaming={isStreaming}
+              rankings={rankings}
+              onRank={handleRank}
+              onMerge={handleMerge}
+              onRegenerate={handleRegenerate}
+              onClearColumn={handleClearColumn}
+              enabledModels={enabledModels}
+              onToggleEnabled={(bid) => setEnabledModels(prev => ({ ...prev, [bid]: !prev[bid] }))}
+            />
+          )}
+          {activeTab === "sora" && <SoraMode />}
+          {activeTab === "prompt_ai" && <PromptMode />}
+        </section>
 
-                <div className="absolute bottom-6 left-0 w-full flex flex-col items-center justify-center px-4 z-30 pointer-events-none gap-4">
-                {!isStreaming && columnMessages[FIESTA_MODEL_BRANDS[0].brandId].length > 0 && (
-                    <div className="flex gap-4">
-                    {rankings.length === 0 && (
-                        <button
-                        onClick={handleRank}
-                        className="bg-gradient-to-r from-orange-600 to-amber-600 hover:scale-105 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 transition-all flex items-center gap-3 pointer-events-auto active:scale-95"
-                        >
-                        <Trophy size={16} /> Battle Evaluation
-                        </button>
-                    )}
-                    <button
-                        onClick={handleMerge}
-                        className="bg-gradient-to-r from-accent to-primary hover:scale-105 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-accent/30 transition-all flex items-center gap-3 pointer-events-auto active:scale-95"
-                    >
-                        <Sparkles size={16} /> Merge Insights
-                    </button>
-                    </div>
-                )}
-
-                <div className="w-full max-w-4xl glass-panel !bg-background/40 backdrop-blur-3xl rounded-3xl md:rounded-[2.5rem] p-3 md:p-5 shadow-2xl pointer-events-auto border border-panel-border glow-accent group focus-within:border-accent/40 transition-all duration-500 scale-in-center">
-                    <div className="flex items-center gap-3 mb-1 px-2 justify-between w-full">
-                      <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] px-1">Unified Intelligence Mode</span>
-                      <div className="flex items-center gap-2 bg-panel-border/30 p-1 rounded-xl border border-panel-border">
-                        <button 
-                            onClick={() => setGlobalTier("Flash")}
-                            className={`flex items-center gap-2 px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${globalTier === 'Flash' ? 'bg-accent text-white' : 'text-muted hover:text-foreground'}`}
-                        >
-                            Flash
-                        </button>
-                        <button 
-                            onClick={() => setGlobalTier("Pro")}
-                            className={`flex items-center gap-2 px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${globalTier === 'Pro' ? 'bg-orange-600 text-white' : 'text-muted hover:text-foreground'}`}
-                        >
-                            Pro
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="relative px-2 flex items-end gap-3">
-                    <textarea
-                        value={prompt}
-                        onChange={(e) => {
-                        setPrompt(e.target.value);
-                        e.target.style.height = 'auto';
-                        e.target.style.height = `${e.target.scrollHeight}px`;
-                        }}
-                        onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendPrompt();
-                        }
-                        }}
-                        placeholder={isStreaming ? "Synthesizing intelligence..." : "Ask anything..."}
-                        className="flex-1 bg-transparent text-foreground placeholder-muted resize-none outline-none max-h-48 min-h-[40px] md:min-h-[50px] py-2 md:py-3 overflow-y-auto font-semibold md:font-bold text-sm md:text-lg leading-relaxed px-1"
-                        rows={1}
-                        disabled={isStreaming}
-                    />
-                    <button
-                        onClick={() => handleSendPrompt()}
-                        disabled={!prompt.trim() || isStreaming}
-                        className={`p-4 rounded-3xl transition-all duration-500 mb-1 ${prompt.trim() ? 'bg-accent text-white shadow-xl shadow-accent/40 scale-110 rotate-0' : 'bg-panel-border text-muted grayscale'}`}
-                    >
-                        {isStreaming ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} />}
-                    </button>
-                    </div>
-                </div>
-                </div>
-            </>
-            ) : activeTab === 'sora' ? (
-            <SoraMode />
-            ) : activeTab === 'prompt_ai' ? (
-            <PromptMode />
-            ) : (
-            <PlaySora />
-            )}
-        </div>
+        {isSettingsOpen && (
+          <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        )}
       </main>
-
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-      />
     </div>
   );
 }
-

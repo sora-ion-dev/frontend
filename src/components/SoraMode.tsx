@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Image as ImageIcon, Crown } from "lucide-react";
+import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Image as ImageIcon, Crown, AlertCircle } from "lucide-react";
 
 interface RankedModel {
     id: string;
@@ -26,7 +26,6 @@ export default function SoraMode() {
     const [messages, setMessages] = useState<SoraMessage[]>([]);
     const [prompt, setPrompt] = useState("");
     const [isGlobalStreaming, setIsGlobalStreaming] = useState(false);
-    const [tier, setTier] = useState<"Flash" | "Pro">("Flash");
     const [image, setImage] = useState<string | null>(null);
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +43,7 @@ export default function SoraMode() {
             const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             const res = await fetch(`${BACKEND_URL}/chat/stream`, {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "x-user-email": sessionEmail
                 },
@@ -108,10 +107,11 @@ export default function SoraMode() {
             setMessages(prev => prev.map(m =>
                 m.id === msgId ? {
                     ...m,
-                    content: "Neural link severed. Attempting to reroute through secondary AI core. Please select 'Reroute to Next AI'.",
+                    content: "Neural link severed. This model could be temporarily offline.",
                     isStreaming: false,
                     error: true,
-                    rankings: filteredRankings 
+                    rankings: filteredRankings,
+                    currentRankIndex: rankIndex
                 } : m
             ));
         } finally {
@@ -128,7 +128,7 @@ export default function SoraMode() {
         const userMsgId = Date.now().toString();
         const assistantMsgId = (Date.now() + 1).toString();
 
-        setMessages(prev => [
+        setMessages((prev: SoraMessage[]) => [
             ...prev,
             { id: userMsgId, role: "user", content: currentPrompt, image: image || undefined },
             { id: assistantMsgId, role: "assistant", content: "", isStreaming: true }
@@ -141,13 +141,12 @@ export default function SoraMode() {
             const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             const rankRes = await fetch(`${BACKEND_URL}/chat/sora_rank`, {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "x-user-email": sessionEmail
                 },
                 body: JSON.stringify({
                     prompt: currentPrompt,
-                    tier: tier,
                     image: currentImage,
                     user_email: sessionEmail
                 })
@@ -198,7 +197,7 @@ export default function SoraMode() {
     return (
         <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-colors duration-500 bg-black">
             <div className="absolute inset-0 liquid-mesh opacity-20 pointer-events-none" />
-            
+
             <div className="flex-1 overflow-y-auto w-full relative hide-scrollbar p-6 md:p-12 pb-64 flex flex-col items-center z-10">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center max-w-2xl mx-auto space-y-8 animate-float">
@@ -256,9 +255,28 @@ export default function SoraMode() {
                                                 </div>
                                             )}
                                             {msg.content && (
-                                                <div className={`transition-all duration-500 scale-in-center text-[16px] leading-relaxed whitespace-pre-wrap font-medium`}>
-                                                    {msg.content}
-                                                    {msg.isStreaming && <span className="inline-block w-2 h-5 bg-accent/50 animate-pulse ml-2 align-middle rounded-full"></span>}
+                                                <div className="flex flex-col gap-3">
+                                                    {msg.rankings && msg.currentRankIndex !== undefined && (
+                                                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-accent/80 mb-2">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                                                            Active Route: {msg.rankings[msg.currentRankIndex].name}
+                                                        </div>
+                                                    )}
+                                                    <div className={`transition-all duration-500 scale-in-center text-[16px] leading-relaxed whitespace-pre-wrap font-medium`}>
+                                                        {msg.content}
+                                                        {msg.isStreaming && <span className="inline-block w-2 h-5 bg-accent/50 animate-pulse ml-2 align-middle rounded-full"></span>}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {!msg.content && !msg.isStreaming && msg.error && (
+                                                <div className="flex flex-col gap-2 py-4">
+                                                    <div className="text-red-400 font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                                                        <AlertCircle size={14} />
+                                                        Ranking Engine Alert
+                                                    </div>
+                                                    <div className="text-muted text-sm italic">
+                                                        The top ranked model failed to respond. You can try rerouting below.
+                                                    </div>
                                                 </div>
                                             )}
 
@@ -266,17 +284,17 @@ export default function SoraMode() {
                                                 <div className="mt-6 flex flex-col gap-4">
                                                     <div className="flex items-center gap-4">
                                                         <div className="flex items-center gap-2 text-muted hover:text-foreground transition-colors cursor-default">
-                                                            <img 
-                                                                src={msg.rankings[msg.currentRankIndex].logo} 
-                                                                className="w-4 h-4 object-contain opacity-80" 
-                                                                alt={msg.rankings[msg.currentRankIndex].brand} 
+                                                            <img
+                                                                src={msg.rankings[msg.currentRankIndex].logo}
+                                                                className="w-4 h-4 object-contain opacity-80"
+                                                                alt={msg.rankings[msg.currentRankIndex].brand}
                                                             />
                                                             <span className="text-xs font-medium tracking-tight">
                                                                 {msg.rankings[msg.currentRankIndex].id}
                                                             </span>
                                                         </div>
 
-                                                         {msg.currentRankIndex < msg.rankings.length - 1 && !isGlobalStreaming && (
+                                                        {msg.currentRankIndex < msg.rankings.length - 1 && !isGlobalStreaming && (
                                                             <button
                                                                 onClick={() => handleAskAnother(msg.id)}
                                                                 className="flex items-center gap-1.5 text-muted hover:text-orange-400 transition-all text-xs font-black uppercase tracking-widest border border-panel-border px-4 py-2 rounded-xl hover:bg-orange-500/5 hover:border-orange-500/20"
@@ -316,7 +334,7 @@ export default function SoraMode() {
                         </div>
                     )}
                     <div className={`w-full glass-panel shadow-2xl relative border ${isGlobalStreaming ? 'border-accent/40 shadow-accent/5' : 'border-panel-border focus-within:border-accent/40'} bg-background/40 backdrop-blur-3xl rounded-[2rem] p-3 pl-4 flex items-center gap-3 transition-all duration-500 group`}>
-                        <button 
+                        <button
                             onClick={() => fileInputRef.current?.click()}
                             className="p-2 text-muted hover:text-accent transition-colors"
                         >
@@ -341,20 +359,6 @@ export default function SoraMode() {
                             placeholder={isGlobalStreaming ? "Sorting Neural Pathways..." : "Prompt Sora Engine..."}
                             className="flex-1 bg-transparent text-foreground placeholder-muted outline-none text-base font-bold py-3 disabled:opacity-50"
                         />
-                        <div className="flex items-center gap-2 bg-panel-border/30 p-1 rounded-2xl border border-panel-border mr-1">
-                            <button 
-                                onClick={() => setTier("Flash")}
-                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${tier === 'Flash' ? 'bg-accent text-white shadow-lg' : 'text-muted hover:text-foreground'}`}
-                            >
-                                Flash
-                            </button>
-                            <button 
-                                onClick={() => setTier("Pro")}
-                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${tier === 'Pro' ? 'bg-orange-600 text-white shadow-lg' : 'text-muted hover:text-foreground'}`}
-                            >
-                                Pro
-                            </button>
-                        </div>
                         <button
                             onClick={handleSend}
                             disabled={!prompt.trim() || isGlobalStreaming}

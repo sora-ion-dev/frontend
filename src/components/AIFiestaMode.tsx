@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Trophy, Send, RotateCcw, Brain, Zap, Swords, Merge, Loader2 } from "lucide-react";
-import { AIBrand, ChatMessage, FIESTA_MODEL_BRANDS as MODEL_BRANDS } from "@/types";
+import { Sparkles, Trophy, Send, RotateCcw, Brain, Zap, Swords, Merge, Loader2, Plus, Mic, Image as ImageIcon } from "lucide-react";
+import { AIBrand, ChatMessage } from "@/types";
+import { MODEL_BRANDS, FIESTA_BRAND_IDS } from "@/types";
 import AIColumn from "./AIColumn";
 
 interface AIFiestaModeProps {
@@ -18,8 +19,7 @@ interface AIFiestaModeProps {
     onClearColumn: (brandId: string) => void;
     enabledModels: Record<string, boolean>;
     onToggleEnabled: (brandId: string) => void;
-    currentTier: "Flash" | "Moderate" | "Pro";
-    toggleTier: (tier: "Flash" | "Moderate" | "Pro") => void;
+    // Removed tier props as per 31-model architecture
 }
 
 export default function AIFiestaMode({
@@ -35,132 +35,112 @@ export default function AIFiestaMode({
     onClearColumn,
     enabledModels,
     onToggleEnabled,
-    currentTier,
-    toggleTier
 }: AIFiestaModeProps) {
     const [prompt, setPrompt] = useState("");
+    const [hasStarted, setHasStarted] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const handleSend = () => {
         if (!prompt.trim() || isStreaming) return;
-        const enabledModelIds = MODEL_BRANDS.filter(b => enabledModels[b.brandId]).map(b => b.brandId);
+        setHasStarted(true);
+        const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
+        const enabledModelIds = fiestaBrands.filter(b => enabledModels[b.brandId]).map(b => b.brandId);
         onSendPrompt(prompt, enabledModelIds);
         setPrompt("");
         if (textareaRef.current) textareaRef.current.style.height = "auto";
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
+    const handleWheel = (e: React.WheelEvent) => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollLeft += e.deltaY;
         }
     };
 
+    const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
+
     return (
-        <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-colors duration-500 bg-black">
-            <div className="absolute inset-0 liquid-mesh opacity-30 pointer-events-none" />
-            
-            {/* Vertical Scrollable AI Cards Grid */}
+        <div className="h-full flex flex-col overflow-hidden font-sans relative" style={{ background: "linear-gradient(180deg, #0d0d2e 0%, #0a0a1a 100%)" }}>
+
+            {/* Grid display area */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto w-full relative hide-scrollbar p-6 md:p-10 pb-64 z-10"
+                onWheel={handleWheel}
+                className="flex-1 overflow-x-auto overflow-y-hidden px-4 md:px-6 pt-6 pb-4"
+                style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(108,99,255,0.3) transparent" }}
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 auto-rows-[650px] max-w-[2400px] mx-auto scale-in-center">
-                    {MODEL_BRANDS.map(brand => (
-                        <AIColumn
-                            key={brand.brandId}
-                            brand={brand}
-                            messages={columnMessages[brand.brandId] || []}
-                            selectedModelId={selectedModels[brand.brandId]}
-                            onModelChange={(newId) => onModelChange(brand.brandId, newId)}
-                            isEnabled={enabledModels[brand.brandId]}
-                            onToggleEnabled={() => onToggleEnabled(brand.brandId)}
-                            isStreaming={isStreaming}
-                            rank={rankings.indexOf(brand.brandId) !== -1 ? rankings.indexOf(brand.brandId) + 1 : null}
-                            onRegenerate={(msgId) => onRegenerate(brand.brandId, msgId)}
-                            onClearColumn={() => onClearColumn(brand.brandId)}
-                        />
+                <div className="flex flex-row gap-4 min-w-max h-full">
+                    {fiestaBrands.map((brand) => (
+                        <div key={brand.brandId} className={`w-[400px] flex-shrink-0 h-full transition-all duration-500 ${!enabledModels[brand.brandId] ? 'opacity-30 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
+                            <AIColumn
+                                brand={brand}
+                                messages={columnMessages[brand.brandId] || []}
+                                selectedModelId={selectedModels[brand.brandId]}
+                                onModelChange={(mid) => onModelChange(brand.brandId, mid)}
+                                onRegenerate={(mid) => onRegenerate(brand.brandId, mid)}
+                                isStreaming={isStreaming}
+                                rank={null}
+                                onClearColumn={() => onClearColumn(brand.brandId)}
+                                isEnabled={enabledModels[brand.brandId]}
+                                onToggleEnabled={() => onToggleEnabled(brand.brandId)}
+                            />
+                        </div>
                     ))}
                 </div>
             </div>
 
-            {/* Floating UI Elements */}
-            <div className="absolute bottom-10 left-0 w-full flex flex-col items-center justify-center px-6 z-40 pointer-events-none gap-8">
-
-                {/* Generate Consensus / AI Battle Buttons */}
-                {!isStreaming && columnMessages[MODEL_BRANDS[0].brandId]?.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-4 pointer-events-auto animate-float">
-                        {rankings.length === 0 && (
+            {/* Input Bar at Bottom */}
+            <div className="px-6 pb-6 pt-3 border-t border-white/5">
+                <div className="max-w-5xl mx-auto flex flex-col gap-3">
+                    {/* Merge Button - shows when there are messages */}
+                    {hasStarted && (
+                        <div className="flex justify-center">
                             <button
-                                onClick={onRank}
-                                className="bg-accent text-white px-10 py-4 rounded-3xl font-semibold shadow-2xl active:scale-95 transition-all flex items-center gap-3 text-xs tracking-[0.2em] border border-white/10 hover:rotate-1"
+                                onClick={onMerge}
+                                className="flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95"
+                                style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)", boxShadow: "0 4px 20px rgba(108,99,255,0.3)" }}
                             >
-                                <Swords size={20} /> Neural Battle Evaluation
+                                <Merge className="w-3.5 h-3.5" /> Generate Consensus
                             </button>
-                        )}
-                        <button
-                            onClick={onMerge}
-                            className="px-10 py-4 rounded-3xl font-semibold shadow-2xl active:scale-95 transition-all flex items-center gap-3 text-xs tracking-[0.2em] border border-white/10 hover:-rotate-1 bg-white text-black"
-                        >
-                            <Merge size={20} /> Synthesize Consensus
+                        </div>
+                    )}
+
+                    <div className="relative flex items-center gap-3 px-4 py-3 rounded-2xl border border-white/10"
+                        style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(20px)" }}>
+                        <button className="flex-shrink-0 p-2 text-white/20 hover:text-white/60 rounded-xl transition-all hover:bg-white/5">
+                            <Plus className="w-5 h-5" />
                         </button>
-                    </div>
-                )}
 
-                {/* Floating Question Box */}
-                <div className="w-full max-w-4xl glass-panel rounded-[3rem] p-6 shadow-2xl border-2 border-panel-border pointer-events-auto transition-all backdrop-blur-3xl group">
-                    <div className="flex flex-col md:flex-row items-center gap-6 mb-4">
-                        {/* Fast/Moderate/Best Mode Toggle */}
-                        <div className="flex bg-foreground/5 p-1.5 rounded-[2rem] border-2 border-panel-border shadow-inner pointer-events-auto">
-                            <button
-                                onClick={() => toggleTier("Pro")}
-                                className={`px-8 py-2.5 rounded-[1.5rem] text-[10px] font-semibold tracking-widest transition-all ${currentTier === "Pro" ? "bg-accent text-white shadow-xl scale-105" : "text-muted hover:text-foreground"}`}
-                            >
-                                Intelligence
-                            </button>
-                            <button
-                                onClick={() => toggleTier("Moderate")}
-                                className={`px-8 py-2.5 rounded-[1.5rem] text-[10px] font-semibold tracking-widest transition-all ${currentTier === "Moderate" ? "bg-accent text-white shadow-xl scale-105" : "text-muted hover:text-foreground"}`}
-                            >
-                                Balanced
-                            </button>
-                            <button
-                                onClick={() => toggleTier("Flash")}
-                                className={`px-8 py-2.5 rounded-[1.5rem] text-[10px] font-semibold tracking-widest transition-all ${currentTier === "Flash" ? "bg-accent text-white shadow-xl scale-105" : "text-muted hover:text-foreground"}`}
-                            >
-                                Velocity
-                            </button>
-                        </div>
-                        <div className="hidden md:flex flex-1 items-center gap-2 px-4 border-l border-panel-border">
-                            <Brain size={16} className="text-accent" />
-                            <span className="text-[10px] font-semibold text-muted tracking-[0.2em]">6x Parallel Processing Active</span>
-                        </div>
-                    </div>
-                    <div className="relative flex items-center gap-4">
-                        <div className={`p-4 rounded-3xl transition-all ${isStreaming ? 'bg-accent/20 text-accent animate-pulse' : 'bg-foreground/5 text-muted'}`}>
-                            <Zap size={24} />
-                        </div>
                         <textarea
                             ref={textareaRef}
+                            placeholder="Ask anything to the world's most powerful AIs..."
+                            rows={1}
+                            className="w-full bg-transparent border-none focus:ring-0 text-white text-sm placeholder-white/20 resize-none py-1.5 max-h-32 leading-relaxed"
                             value={prompt}
                             onChange={(e) => {
                                 setPrompt(e.target.value);
-                                e.target.style.height = 'auto';
+                                e.target.style.height = "auto";
                                 e.target.style.height = `${e.target.scrollHeight}px`;
                             }}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Initialize Multi-Model Uplink..."
-                            className="w-full bg-transparent text-foreground placeholder-muted resize-none outline-none max-h-48 min-h-[60px] py-3 px-1 text-xl font-semibold leading-relaxed hide-scrollbar"
-                            rows={1}
-                            disabled={isStreaming}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSend();
+                                }
+                            }}
                         />
+
+                        <button className="flex-shrink-0 p-2 text-white/20 hover:text-white/60 rounded-xl transition-all hover:bg-white/5">
+                            <Mic className="w-5 h-5" />
+                        </button>
+
                         <button
                             onClick={handleSend}
                             disabled={!prompt.trim() || isStreaming}
-                            className={`p-6 rounded-[2rem] transition-all duration-500 shadow-2xl active:scale-90 shrink-0 ${prompt.trim() && !isStreaming ? 'bg-accent text-white shadow-accent/40 scale-105' : 'bg-muted/20 text-muted grayscale'}`}
+                            className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-20 transition-all active:scale-90 hover:scale-105 text-white"
+                            style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)" }}
                         >
-                            {isStreaming ? <Loader2 size={28} className="animate-spin" /> : <Send size={28} />}
+                            {isStreaming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                         </button>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, RefreshCw, Maximize2, Minimize2, Download, Settings2, MoreHorizontal, X, Clock, Brain, MessageSquare, ChevronDown } from "lucide-react";
+import { Copy, RefreshCw, Maximize2, Minimize2, Download, Settings2, MoreHorizontal, X, Clock, Brain, MessageSquare, ChevronDown, ThumbsUp, ThumbsDown, Share2, CornerDownRight } from "lucide-react";
 import { AIBrand, AIModel, ChatMessage } from "@/types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -52,101 +52,69 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
         <>
             {isFullScreen && <div className="min-w-[250px] max-w-[280px] w-full shrink-0 hidden md:block" />}
             <div
-                className={`flex flex-col flex-1 ${isFullScreen ? 'fixed inset-0 z-50 bg-background rounded-none border-0' : 'h-full w-full border-2 border-panel-border rounded-[2rem] overflow-hidden glass-panel relative shadow-xl hover:shadow-2xl hover:border-accent/20 transition-all duration-500'} ${!isEnabled ? 'opacity-30 grayscale saturate-0' : ''}`}
+                className={`flex flex-col flex-1 h-full min-h-[500px] rounded-2xl overflow-hidden transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-50 rounded-none' : ''} ${!isEnabled ? 'opacity-30 grayscale' : 'opacity-100'}`}
+                style={{ background: "linear-gradient(180deg, #0e0e2a 0%, #080820 100%)", border: "1px solid rgba(108,99,255,0.15)" }}
             >
-                {/* Medal Overlay Header */}
-                {rank && (
-                    <div className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 z-20">
-                        {renderMedal()}
-                    </div>
-                )}
                 {/* Header */}
-                <div className={`flex items-center justify-between p-5 border-b border-panel-border bg-foreground/[0.02] transition-colors ${rank === 1 ? 'border-b-yellow-500/30' : ''}`}>
-                    <div className="flex flex-col flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                            {renderLogo()}
-                            <div className="flex-1 min-w-0">
-                                <div className="text-sm font-bold text-foreground truncate tracking-tight">
-                                    {selectedModel.name}
-                                </div>
-                                <div className="text-[10px] text-muted font-medium truncate tracking-tight uppercase">
-                                    {brand.realBrandName}
-                                </div>
+                <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "rgba(108,99,255,0.1)", background: "rgba(255,255,255,0.02)" }}>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {renderLogo()}
+                        <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-1.5 cursor-pointer group hover:bg-white/5 rounded-lg px-1 transition-all">
+                                <span className="text-sm font-bold text-white truncate">
+                                    {selectedModel ? selectedModel.name : brand.brandName}
+                                </span>
+                                <ChevronDown className="w-3.5 h-3.5 text-white/30 group-hover:text-white/60 flex-shrink-0" />
                             </div>
                         </div>
                     </div>
-                    <div className="flex space-x-2 items-center relative ml-4">
+
+                    <div className="flex items-center gap-2">
                         <button
-                            onClick={onToggleEnabled}
-                            className={`w-10 h-5 rounded-full flex items-center transition-all px-[3px] shadow-inner ${isEnabled ? 'bg-accent' : 'bg-muted'}`}
-                            title={isEnabled ? "Deactivate Neural Node" : "Activate Neural Node"}
+                            onClick={() => onRegenerate(messages[messages.length-1]?.id || "")}
+                            className="p-1.5 text-white/20 hover:text-white/70 hover:bg-white/5 rounded-lg transition-all"
                         >
-                            <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transition-transform duration-300 ${isEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                            <RefreshCw size={13} />
                         </button>
 
                         <button
-                            onClick={() => setShowSettings(!showSettings)}
-                            className={`p-2 rounded-xl transition-all ${showSettings ? 'bg-accent/10 text-accent shadow-inner' : 'text-muted hover:text-accent hover:bg-accent/5'}`}
-                            title="Intelligence Parameters"
+                            onClick={onToggleEnabled}
+                            className={`w-9 h-5 rounded-full flex items-center transition-all px-[2px] flex-shrink-0 ${isEnabled ? 'bg-[#6c63ff]' : 'bg-white/10'}`}
                         >
-                            <Settings2 size={16} />
+                            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                         </button>
-                        {showSettings && (
-                            <div className="absolute right-0 top-12 w-56 bg-panel-border/80 backdrop-blur-2xl border-2 border-accent/20 rounded-2xl shadow-2xl z-30 p-4 scale-in-center overflow-hidden">
-                                <div className="absolute inset-0 bg-accent/5 pointer-events-none" />
-                                <h4 className="text-[10px] font-semibold text-white px-1 tracking-widest mb-4 bg-accent/80 inline-block rounded py-0.5">Parameters</h4>
-                                <div className="mb-5 px-1">
-                                    <div className="flex justify-between text-[11px] font-semibold mb-2 text-foreground tracking-tighter">
-                                        <span>Temperature</span>
-                                        <span className="text-accent">{tempValue}</span>
-                                    </div>
-                                    <input 
-                                        type="range" 
-                                        min="0" 
-                                        max="1" 
-                                        step="0.1" 
-                                        value={tempValue} 
-                                        onChange={(e) => setTempValue(parseFloat(e.target.value))} 
-                                        className="w-full h-1.5 bg-background rounded-lg appearance-none cursor-pointer accent-accent" 
-                                    />
-                                </div>
-                                <button 
-                                    onClick={() => { onClearColumn?.(); setShowSettings(false); }} 
-                                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold tracking-widest text-red-500 hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-500/20"
-                                >
-                                    <X size={14} /> Reset History
-                                </button>
-                            </div>
-                        )}
-                        <button 
-                            onClick={() => setIsFullScreen(!isFullScreen)} 
-                            className={`p-2 rounded-xl transition-all ${isFullScreen ? 'bg-accent/10 text-accent shadow-inner' : 'text-muted hover:text-foreground hover:bg-foreground/5'}`}
-                        >
-                            {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+
+                        <button className="p-1.5 text-white/20 hover:text-white/70 hover:bg-white/5 rounded-lg transition-all">
+                            <MoreHorizontal size={13} />
+                        </button>
+
+                        <button className="p-1.5 text-white/20 hover:text-white/70 hover:bg-white/5 rounded-lg transition-all" onClick={() => setIsFullScreen(!isFullScreen)}>
+                            {isFullScreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
                         </button>
                     </div>
                 </div>
 
                 {/* Chat Area */}
-                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-8 hide-scrollbar relative">
+                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 hide-scrollbar">
                     {messages.length === 0 ? (
-                        <div className="m-auto text-center space-y-4 animate-float">
-                            <div className="mx-auto w-16 h-16 rounded-3xl flex items-center justify-center bg-foreground/5 border-2 border-panel-border shadow-inner">
-                                <Brain size={32} className="text-accent/40" />
+                        <div className="m-auto text-center space-y-4 opacity-40">
+                            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "rgba(108,99,255,0.1)", border: "1px solid rgba(108,99,255,0.2)" }}>
+                                <Brain size={28} className="text-[#6c63ff]" />
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <p className="text-[10px] font-semibold text-foreground tracking-[0.2em]">Neural Connection Idle</p>
-                                <p className="text-[12px] text-muted font-medium">Waiting for uplink...</p>
+                            <div>
+                                <p className="text-sm font-bold text-white/60">Neural Connection Idle</p>
+                                <p className="text-xs text-white/30 mt-1">Waiting for uplink...</p>
                             </div>
                         </div>
                     ) : (
                         messages.map((msg, idx) => (
                             <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div
-                                    className={`max-w-[95%] text-[15px] leading-relaxed transition-all duration-500 ${msg.role === 'user'
-                                        ? 'message-bubble message-bubble-user text-white scale-in-center font-bold px-5 py-3 rounded-2xl' 
-                                        : 'message-bubble message-bubble-ai text-foreground self-start w-full px-5 py-3 rounded-2xl'
-                                        }`}
+                                    className={`max-w-[90%] text-sm leading-relaxed ${msg.role === 'user'
+                                        ? 'text-white px-4 py-2.5 rounded-2xl rounded-tr-sm'
+                                        : 'text-white/85 self-start w-full'
+                                    }`}
+                                    style={msg.role === 'user' ? { background: "linear-gradient(135deg, #6c63ff22, #a855f722)", border: "1px solid rgba(108,99,255,0.2)" } : {}}
                                 >
                                     {msg.role === 'user' ? (
                                         msg.content
@@ -193,22 +161,20 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                     {msg.isStreaming && <span className="inline-block w-2 h-5 ml-2 bg-accent animate-pulse align-middle rounded-full"></span>}
                                 </div>
 
-                                {/* Controls (Only show for AI responses) */}
                                 {msg.role === 'assistant' && !msg.isStreaming && msg.content && (
-                                    <div className="flex items-center gap-1.5 mt-3 ml-2">
+                                    <div className="flex items-center gap-4 mt-2 ml-1 opacity-20 hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => navigator.clipboard.writeText(msg.content)}
-                                            className="p-1.5 text-muted hover:text-accent hover:bg-accent/5 rounded-lg transition-all"
-                                            title="Sync to Terminal"
+                                            className="p-1 hover:text-accent transition-colors"
+                                            title="Copy"
                                         >
-                                            <Copy size={13} />
+                                            <Copy size={16} />
                                         </button>
-                                        <button
-                                            onClick={() => onRegenerate(msg.id)}
-                                            className="p-1.5 text-muted hover:text-orange-500 hover:bg-orange-500/5 rounded-lg transition-all"
-                                            title="Loop Logic"
-                                        >
-                                            <RefreshCw size={13} />
+                                        <button className="p-1 hover:text-accent transition-colors">
+                                            <ThumbsUp size={16} />
+                                        </button>
+                                        <button className="p-1 hover:text-accent transition-colors">
+                                            <ThumbsDown size={16} />
                                         </button>
                                         <button
                                             onClick={() => {
@@ -220,17 +186,10 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                                 a.click();
                                                 URL.revokeObjectURL(url);
                                             }}
-                                            className="p-1.5 text-muted hover:text-green-500 hover:bg-green-500/5 rounded-lg transition-all"
-                                            title="Archive Sequence"
+                                            className="p-1 hover:text-accent transition-colors"
+                                            title="Download"
                                         >
-                                            <Download size={13} />
-                                        </button>
-                                        <button
-                                            onClick={() => setExpandedMsg(msg.content)}
-                                            className="p-1.5 text-muted hover:text-blue-500 hover:bg-blue-500/5 rounded-lg transition-all"
-                                            title="Maximize Neural Projection"
-                                        >
-                                            <Maximize2 size={13} />
+                                            <Download size={16} />
                                         </button>
                                     </div>
                                 )}

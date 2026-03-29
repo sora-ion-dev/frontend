@@ -4,13 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { 
   Sparkles, Loader2, Send, Image as ImageIcon, Settings2, 
   ChevronRight, Search, Zap, Crown, MessageSquare, 
-  Info, Shield, History, Plus
+  Info, Shield, History, Plus, Brain, Mic, X
 } from "lucide-react";
 import { AIBrand, ChatMessage, MODEL_BRANDS } from "@/types";
 
 export default function PlaySora() {
     const [selectedBrand, setSelectedBrand] = useState<AIBrand>(MODEL_BRANDS[0]);
-    const [selectedTier, setSelectedTier] = useState<"Flash" | "Pro">("Flash");
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
@@ -18,8 +17,9 @@ export default function PlaySora() {
     const [image, setImage] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [requestMode, setRequestMode] = useState<"Single" | "Multiple" | "All">("Single");
-    const [selectedMultipleBrands, setSelectedMultipleBrands] = useState<string[]>([MODEL_BRANDS[0].brandId, MODEL_BRANDS[1].brandId, MODEL_BRANDS[2].brandId]);
+    const [selectedMultipleBrands, setSelectedMultipleBrands] = useState<string[]>([MODEL_BRANDS[0].id, MODEL_BRANDS[1].id, MODEL_BRANDS[2].id]);
     const [showMultipleModal, setShowMultipleModal] = useState(false);
+    const [hasStarted, setHasStarted] = useState(false);
     
     const [params, setParams] = useState({
         temperature: 0.7,
@@ -69,11 +69,12 @@ export default function PlaySora() {
         setMessages(prev => [...prev, userMsg, ...newAssistantMsgs]);
         setInput("");
         setIsStreaming(true);
+        setHasStarted(true);
 
         const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
         await Promise.all(brandsToUse.map(async (brand, index) => {
-            const currentModel = brand.models.find(m => m.tier === selectedTier) || brand.models[0];
+            const currentModelId = brand.id;
             const assistantMsgId = newAssistantMsgs[index].id;
             
             try {
@@ -83,7 +84,7 @@ export default function PlaySora() {
                     body: JSON.stringify({
                         prompt: input,
                         system_prompt: systemPrompt,
-                        models: [currentModel.id],
+                        models: [brand.id],
                         image: image,
                         temperature: params.temperature,
                         max_tokens: params.maxTokens,
@@ -142,9 +143,20 @@ export default function PlaySora() {
     };
 
     return (
-        <div className="flex-1 flex h-full bg-black text-foreground overflow-hidden">
+        <div className="flex-1 flex h-full bg-black text-foreground overflow-hidden font-sans grid-bg-fiesta relative">
+            {/* Initial Welcome Screen */}
+            {!hasStarted && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in duration-700 pointer-events-none">
+                    <div className="w-24 h-24 mb-8 bg-accent/20 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(34,197,94,0.1)]">
+                        <Brain className="w-12 h-12 text-accent" />
+                    </div>
+                    <h1 className="text-5xl font-black text-white mb-2 tracking-tight">Hii, User!</h1>
+                    <p className="text-white/40 text-lg mb-12">How can I assist Sora AI today?</p>
+                </div>
+            )}
+
             {/* Left Sidebar: Model Selector */}
-            <aside className={`w-80 border-r border-panel-border bg-card/20 flex flex-col hidden lg:flex ${requestMode !== 'Single' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            <aside className={`w-80 border-r border-panel-border bg-[#050505]/50 backdrop-blur-xl flex flex-col hidden lg:flex ${requestMode !== 'Single' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 <div className="p-4 border-b border-panel-border">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
@@ -160,16 +172,16 @@ export default function PlaySora() {
                 <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                     {filteredBrands.map(brand => (
                         <button 
-                            key={brand.brandId}
+                            key={brand.id}
                             onClick={() => setSelectedBrand(brand)}
-                            className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${selectedBrand.brandId === brand.brandId ? 'bg-accent text-white shadow-lg' : 'hover:bg-card/50 text-muted'}`}
+                            className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${selectedBrand.brandId === brand.id ? 'bg-accent text-white shadow-lg' : 'hover:bg-card/50 text-muted'}`}
                         >
-                            <img src={brand.logo} alt={brand.brandName} className="w-6 h-6 rounded-md bg-white p-0.5" />
+                            <img src={brand.logo} alt={brand.name} className="w-6 h-6 rounded-md bg-white p-0.5" />
                             <div className="flex-1 text-left">
-                                <p className="text-xs font-black uppercase tracking-tight">{brand.brandName}</p>
-                                <p className="text-[9px] opacity-60 font-bold truncate">{brand.realBrandName}</p>
+                                <p className="text-xs font-black uppercase tracking-tight">{brand.name}</p>
+                                <p className="text-[9px] opacity-60 font-bold truncate">{brand.brand}</p>
                             </div>
-                            {selectedBrand.brandId === brand.brandId && <ChevronRight size={14} />}
+                            {selectedBrand.brandId === brand.id && <ChevronRight size={14} />}
                         </button>
                     ))}
                 </div>
@@ -177,65 +189,42 @@ export default function PlaySora() {
 
             {/* Center Area: Chat & Input */}
             <main className="flex-1 flex flex-col relative min-w-0">
-                <header className="h-16 border-b border-panel-border flex items-center justify-between px-6 bg-background/30 backdrop-blur-md z-10">
+                <header className="h-16 border-b border-panel-border flex items-center justify-between px-6 bg-background/30 backdrop-blur-md z-10 transition-opacity duration-1000" style={{ opacity: hasStarted ? 1 : 0 }}>
                     <div className="flex items-center gap-4">
                         <img src={selectedBrand.logo} className="w-8 h-8 rounded-lg bg-white p-1" alt="Logo" />
                         <div>
                             <h2 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
                                 {selectedBrand.brandName} 
-                                <span className={`text-[9px] px-2 py-0.5 rounded-full border ${selectedTier === 'Pro' ? 'bg-orange-500/10 border-orange-500/50 text-orange-400' : 'bg-blue-500/10 border-blue-500/50 text-blue-400'}`}>
-                                    {selectedTier}
-                                </span>
                             </h2>
                             <p className="text-[10px] text-muted font-bold truncate">{selectedBrand.description}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 bg-panel-border/30 p-1 rounded-xl border border-panel-border">
-                        <button 
-                            onClick={() => setSelectedTier("Flash")}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${selectedTier === 'Flash' ? 'bg-accent text-white shadow-lg' : 'text-muted hover:text-foreground'}`}
-                        >
-                            <Zap size={12} /> Flash
-                        </button>
-                        <button 
-                            onClick={() => setSelectedTier("Pro")}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${selectedTier === 'Pro' ? 'bg-orange-600 text-white shadow-lg' : 'text-muted hover:text-foreground'}`}
-                        >
-                            <Crown size={12} /> Pro
-                        </button>
-                    </div>
                 </header>
 
-                {/* System Prompt Bar */}
-                <div className="px-6 py-2 border-b border-panel-border bg-card/10">
-                    <div className="flex items-center gap-2 text-muted mb-1">
-                        <Shield size={12} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">System Architecture</span>
-                    </div>
-                    <textarea 
-                        className="w-full bg-transparent text-[11px] font-bold text-foreground/80 outline-none resize-none hide-scrollbar"
-                        value={systemPrompt}
-                        onChange={(e) => setSystemPrompt(e.target.value)}
-                        rows={1}
-                        placeholder="Configure system behavior..."
-                    />
-                </div>
-
-                {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                    {messages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center opacity-30 select-none">
-                            <img src={selectedBrand.logo} className="w-24 h-24 rounded-[2rem] bg-white p-4 mb-6 grayscale" alt="Ghost Logo" />
-                            <h3 className="text-2xl font-black uppercase tracking-[0.2em] mb-2">Neural Playground</h3>
-                            <p className="text-xs font-bold uppercase tracking-widest">Select a neural node to begin deep synthesis.</p>
+                <div className={`flex-1 flex flex-col transition-all duration-1000 overflow-hidden ${hasStarted ? 'opacity-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                    {/* System Prompt Bar */}
+                    <div className="px-6 py-2 border-b border-panel-border bg-card/10">
+                        <div className="flex items-center gap-2 text-muted mb-1">
+                            <Shield size={12} />
+                            <span className="text-[9px] font-black uppercase tracking-widest">System Architecture</span>
                         </div>
-                    ) : (
-                        messages.map((m, i) => (
+                        <textarea 
+                            className="w-full bg-transparent text-[11px] font-bold text-foreground/80 outline-none resize-none hide-scrollbar"
+                            value={systemPrompt}
+                            onChange={(e) => setSystemPrompt(e.target.value)}
+                            rows={1}
+                            placeholder="Configure system behavior..."
+                        />
+                    </div>
+
+                    {/* Messages Area */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                        {messages.map((m, i) => (
                             <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
-                                <div className={`max-w-[85%] p-4 rounded-3xl ${m.role === 'user' ? 'bg-accent/10 border border-accent/20 text-foreground' : 'bg-card/30 border border-panel-border text-foreground/90'}`}>
-                                    <div className="flex items-center gap-3 mb-2 opacity-50">
+                                <div className={`max-w-[85%] p-4 rounded-3xl ${m.role === 'user' ? 'bg-[#1a1a1a] border border-white/5 text-foreground px-5 py-3 shadow-xl' : 'bg-transparent text-foreground/90 w-full'}`}>
+                                    <div className="flex items-center gap-3 mb-2 opacity-30">
                                         {m.role === 'user' ? <MessageSquare size={12} /> : <img src={m.brand?.logo || selectedBrand.logo} className="w-4 h-4 rounded ml-1 bg-white p-0.5" />}
-                                        <span className="text-[10px] font-black uppercase tracking-widest">
+                                        <span className="text-[9px] font-black uppercase tracking-widest">
                                             {m.role === 'user' ? 'User Sequence' : `${m.brand?.brandName || selectedBrand.brandName} Response`}
                                         </span>
                                     </div>
@@ -249,85 +238,74 @@ export default function PlaySora() {
                                     )}
                                 </div>
                             </div>
-                        ))
-                    )}
-                    <div ref={messagesEndRef} />
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </div>
                 </div>
 
-                {/* Input Panel */}
-                <div className="p-6 border-t border-panel-border bg-background/50 backdrop-blur-3xl">
-                    <div className="max-w-4xl mx-auto flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2 bg-panel-border/30 p-1 rounded-xl border border-panel-border">
-                            <button onClick={() => setRequestMode("Single")} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${requestMode === 'Single' ? 'bg-accent text-white shadow-lg' : 'text-muted hover:text-foreground'}`}>Single AI</button>
-                            <button onClick={() => { setRequestMode("Multiple"); if (selectedMultipleBrands.length === 0) setShowMultipleModal(true); }} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${requestMode === 'Multiple' ? 'bg-accent text-white shadow-lg' : 'text-muted hover:text-foreground'}`}>Multiple AIs</button>
-                            <button onClick={() => setRequestMode("All")} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${requestMode === 'All' ? 'bg-accent text-white shadow-lg' : 'text-muted hover:text-foreground'}`}>All AIs</button>
-                        </div>
-                        {requestMode === "Multiple" && (
-                            <button onClick={() => setShowMultipleModal(true)} className="text-[10px] font-black uppercase tracking-widest text-accent hover:underline flex items-center gap-1 bg-accent/10 px-3 py-1.5 rounded-lg border border-accent/20">
-                                <Settings2 size={12} /> Edit Selection ({selectedMultipleBrands.length})
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="max-w-4xl mx-auto glass-panel border-2 border-panel-border rounded-[2.5rem] p-2 flex flex-col gap-2 transition-all focus-within:border-accent/40 shadow-2xl">
-                        {image && (
-                            <div className="px-4 pt-2">
-                                <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-accent/40 group">
-                                    <img src={image} className="w-full h-full object-cover" alt="Preview" />
+                {/* Interaction Panel - Floating Transition */}
+                <div className={`p-6 pb-12 transition-all duration-1000 ease-in-out ${hasStarted ? 'translate-y-0' : '-translate-y-[25vh]'}`}>
+                    <div className="max-w-4xl mx-auto">
+                        <div className="relative group">
+                            <div className="absolute -inset-1 bg-accent/5 rounded-[2.5rem] blur-xl opacity-0 group-focus-within:opacity-100 transition duration-1000"></div>
+                            <div className="relative flex flex-col bg-[#111] border border-white/[0.05] rounded-[2.5rem] focus-within:border-white/10 transition-all shadow-2xl p-2">
+                                {image && (
+                                    <div className="px-4 pt-2 mb-2">
+                                        <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-accent/40 group">
+                                            <img src={image} className="w-full h-full object-cover" alt="Preview" />
+                                            <button 
+                                                onClick={() => setImage(null)}
+                                                className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-100"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-3 px-2">
                                     <button 
-                                        onClick={() => setImage(null)}
-                                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="p-3 text-white/20 hover:text-accent rounded-full transition-all"
                                     >
-                                        <Plus className="rotate-45" size={12} />
+                                        <ImageIcon size={24} />
+                                    </button>
+                                    <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleImageUpload} />
+                                    <textarea 
+                                        placeholder="Message Sora AI..."
+                                        className="flex-1 bg-transparent border-none focus:ring-0 text-white text-lg placeholder-white/20 py-3 resize-none max-h-48 hide-scrollbar"
+                                        rows={1}
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSend();
+                                            }
+                                        }}
+                                    />
+                                    <button className="p-3 text-white/20 hover:text-accent rounded-full transition-all">
+                                        <Mic size={24} />
+                                    </button>
+                                    <button 
+                                        onClick={handleSend}
+                                        disabled={!input.trim() || isStreaming}
+                                        className="p-4 bg-white text-black rounded-full hover:bg-white/90 transition-all disabled:opacity-20 active:scale-90"
+                                    >
+                                        {isStreaming ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
                                     </button>
                                 </div>
                             </div>
-                        )}
-                        <div className="flex items-center gap-3 px-2">
-                            <button 
-                                onClick={() => fileInputRef.current?.click()}
-                                className="p-3 text-muted hover:text-accent transition-colors rounded-2xl hover:bg-accent/10"
-                            >
-                                <ImageIcon size={20} />
-                            </button>
-                            <input 
-                                type="file" 
-                                hidden 
-                                ref={fileInputRef} 
-                                accept="image/*" 
-                                onChange={handleImageUpload} 
-                            />
-                            <textarea 
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSend();
-                                    }
-                                }}
-                                className="flex-1 bg-transparent border-none outline-none resize-none py-3 text-sm font-bold text-foreground placeholder-muted hide-scrollbar"
-                                placeholder={`Interact with ${selectedBrand.brandName} ${selectedTier}...`}
-                                rows={1}
-                            />
-                            <button 
-                                onClick={handleSend}
-                                disabled={!input.trim() || isStreaming}
-                                className={`p-4 rounded-3xl transition-all ${input.trim() ? 'bg-accent text-white shadow-xl shadow-accent/40 hover:scale-105' : 'bg-card/50 text-muted grayscale cursor-not-allowed'}`}
-                            >
-                                {isStreaming ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                            </button>
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-center gap-6 mt-4">
-                        <div className="flex items-center gap-2 text-[9px] font-black text-muted uppercase tracking-widest">
-                            <Shield size={10} className="text-accent" /> Privacy Secured
-                        </div>
-                        <div className="flex items-center gap-2 text-[9px] font-black text-muted uppercase tracking-widest">
-                            <Crown size={10} className="text-orange-400" /> Pro Tier Enabled
-                        </div>
-                        <div className="flex items-center gap-2 text-[9px] font-black text-muted uppercase tracking-widest">
-                            <Zap size={10} className="text-blue-400" /> Hybrid Architecture
+
+                            {!hasStarted && (
+                                <div className="mt-8 flex gap-3 justify-center">
+                                    <button className="px-6 py-2.5 border border-white/5 rounded-full text-white/40 text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-all flex items-center gap-2">
+                                        <Search size={14} /> Web Search
+                                    </button>
+                                    <button className="px-6 py-2.5 border border-white/5 rounded-full text-white/40 text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-all flex items-center gap-2">
+                                        <History size={14} /> View History
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -417,22 +395,22 @@ export default function PlaySora() {
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 grid grid-cols-1 md:grid-cols-2 gap-3">
                             {MODEL_BRANDS.map(brand => {
-                                const isSelected = selectedMultipleBrands.includes(brand.brandId);
+                                const isSelected = selectedMultipleBrands.includes(brand.id);
                                 return (
-                                    <div key={brand.brandId} className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${isSelected ? 'border-accent bg-accent/5' : 'border-panel-border bg-background/50 hover:bg-card/50'}`}>
+                                    <div key={brand.id} className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${isSelected ? 'border-accent bg-accent/5' : 'border-panel-border bg-background/50 hover:bg-card/50'}`}>
                                         <div className="flex items-center gap-3">
-                                            <img src={brand.logo} className="w-8 h-8 rounded-lg bg-white p-1" alt={brand.brandName} />
+                                            <img src={brand.logo} className="w-8 h-8 rounded-lg bg-white p-1" alt={brand.name} />
                                             <div>
-                                                <p className="text-sm font-black uppercase tracking-tight">{brand.brandName}</p>
-                                                <p className="text-[9px] text-muted font-bold">{brand.realBrandName}</p>
+                                                <p className="text-sm font-black uppercase tracking-tight">{brand.name}</p>
+                                                <p className="text-[9px] text-muted font-bold">{brand.brand}</p>
                                             </div>
                                         </div>
                                         <button 
                                             onClick={() => {
                                                 if (isSelected) {
-                                                    setSelectedMultipleBrands(prev => prev.filter(id => id !== brand.brandId));
+                                                    setSelectedMultipleBrands(prev => prev.filter(id => id !== brand.id));
                                                 } else {
-                                                    setSelectedMultipleBrands(prev => [...prev, brand.brandId]);
+                                                    setSelectedMultipleBrands(prev => [...prev, brand.id]);
                                                 }
                                             }}
                                             className={`w-10 h-5 rounded-full relative transition-colors ${isSelected ? 'bg-accent' : 'bg-panel-border'}`}
