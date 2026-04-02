@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Sparkles, Loader2, Download, RefreshCw, Layers, Wand2, Image as ImageIcon, Frame } from "lucide-react";
+import { BACKEND_URL } from "@/lib/config";
 
 export default function ImageMode() {
     const [prompt, setPrompt] = useState("");
@@ -13,7 +14,6 @@ export default function ImageMode() {
 
         setIsLoading(true);
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             const res = await fetch(`${BACKEND_URL}/chat/image_gen`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

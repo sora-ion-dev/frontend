@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import { BACKEND_URL } from "@/lib/config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
@@ -16,7 +17,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         async signIn({ user }) {
             if (user?.email) {
                 try {
-                    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
                     await fetch(`${BACKEND_URL}/auth/login-event`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },

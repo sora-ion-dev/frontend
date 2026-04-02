@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
+import { BACKEND_URL } from "@/lib/config";
 
 type Message = {
     id: string;

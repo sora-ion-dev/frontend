@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain, Zap, Send, Image as ImageIcon, Plus } from "lucide-react";
 import { AIBrand, ChatMessage, MODEL_BRANDS, FIESTA_BRAND_IDS } from "@/types";
+import { BACKEND_URL } from "@/lib/config";
 import AIColumn from "@/components/AIColumn";
 import SoraMode from "@/components/SoraMode";
 import PromptMode from "@/components/PromptMode";
@@ -78,7 +79,6 @@ export default function Home() {
 
   const fetchUserStatus = async () => {
     try {
-      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const res = await fetch(`${BACKEND_URL}/user-status`, {
         headers: { "email": session?.user?.email || "", "x-user-email": session?.user?.email || "unknown" }
       });
@@ -97,7 +97,6 @@ export default function Home() {
 
   const streamResponse = async (brandId: string, userPrompt: string, selectedModelId: string, assistantMsgId: string) => {
     try {
-      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const currentPersona = localStorage.getItem("superai_persona") || "Professional";
       const currentWebSearch = localStorage.getItem("superai_websearch") === "true";
 
@@ -252,7 +251,6 @@ export default function Home() {
     if (Object.keys(answers).length < 2) return;
 
     try {
-      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const res = await fetch(`${BACKEND_URL}/chat/rank`, {
         method: "POST",
         headers: {
@@ -299,7 +297,6 @@ export default function Home() {
     });
 
     try {
-      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const res = await fetch(`${BACKEND_URL}/chat/merge`, {
         method: "POST",
         headers: {

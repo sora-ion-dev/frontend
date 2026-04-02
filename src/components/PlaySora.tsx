@@ -5,6 +5,7 @@ import {
   Sparkles, Loader2, Send, Mic, Copy, ThumbsUp, ThumbsDown, 
   Download, Plus, RefreshCw, Box
 } from "lucide-react";
+import { BACKEND_URL } from "@/lib/config";
 import { ChatMessage } from "@/types";
 
 interface BattleResult {
@@ -50,7 +51,6 @@ export default function PlaySora() {
     setInput("");
 
     try {
-      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const res = await fetch(`${BACKEND_URL}/sora/battle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

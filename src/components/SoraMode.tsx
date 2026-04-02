@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Image as ImageIcon, Crown, AlertCircle } from "lucide-react";
+import { BACKEND_URL } from "@/lib/config";
 
 interface RankedModel {
     id: string;
@@ -40,7 +41,6 @@ export default function SoraMode() {
 
     const streamAnswer = async (msgId: string, modelId: string, userPrompt: string, rankings: RankedModel[], rankIndex: number) => {
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             const res = await fetch(`${BACKEND_URL}/chat/stream`, {
                 method: "POST",
                 headers: {
@@ -138,7 +138,6 @@ export default function SoraMode() {
         setImage(null);
 
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             const rankRes = await fetch(`${BACKEND_URL}/chat/sora_rank`, {
                 method: "POST",
                 headers: {

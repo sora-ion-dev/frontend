@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { CreditCard, CheckCircle2, ChevronRight, Copy, Loader2, Send } from "lucide-react";
+import { BACKEND_URL } from "@/lib/config";
 
 export default function PaymentPage() {
     const { data: session, status } = useSession();
@@ -19,7 +20,6 @@ export default function PaymentPage() {
         if (!txnId.trim()) return;
         setIsSubmitting(true);
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             const res = await fetch(`${BACKEND_URL}/payment/submit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

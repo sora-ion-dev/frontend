@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BACKEND_URL } from "@/lib/config";
 import { Sparkles, Shield, User, CreditCard, Power, Check, X, Mail, Loader2, RefreshCw, Key } from "lucide-react";
 
 const ADMIN_EMAIL = "bhaveshkori001@gmail.com";
@@ -46,7 +47,6 @@ export default function AdminDashboard() {
 
     const fetchAdminData = async () => {
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             const res = await fetch(`${BACKEND_URL}/admin/data`, {
                 headers: { "X-Admin-Email": ADMIN_EMAIL }
             });
@@ -65,7 +65,6 @@ export default function AdminDashboard() {
         if (!data) return;
         const newFlags = { ...data.feature_flags, [flag]: !data.feature_flags[flag] };
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             await fetch(`${BACKEND_URL}/admin/update-flags`, {
                 method: "POST",
                 headers: {
@@ -82,7 +81,6 @@ export default function AdminDashboard() {
 
     const handleVerify = async (email: string, txn_id: string, action: "approve" | "reject") => {
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             await fetch(`${BACKEND_URL}/admin/verify-payment`, {
                 method: "POST",
                 headers: {

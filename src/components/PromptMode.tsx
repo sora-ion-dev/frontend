@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Sparkles, Loader2, Image as ImageIcon, X, Copy, Check, Brain, Wand2, Zap } from "lucide-react";
+import { BACKEND_URL } from "@/lib/config";
 
 interface PromptMessage {
     id: string;
@@ -59,7 +60,6 @@ export default function PromptMode() {
         ]);
 
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
             const res = await fetch(`${BACKEND_URL}/chat/prompt_ai`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
