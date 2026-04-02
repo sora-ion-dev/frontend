@@ -103,12 +103,12 @@ export default function PlaySora() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#111111] text-white font-sans overflow-hidden relative">
+    <div className="flex flex-col h-full bg-background text-foreground font-sans overflow-hidden relative transition-colors duration-500">
       {/* Top Header */}
       <header className="h-16 flex items-center px-6 bg-transparent shrink-0">
         <div className="flex items-center gap-2 cursor-pointer">
-          <Sparkles className="w-5 h-5 text-emerald-400" />
-          <span className="font-semibold text-[15px]">Super Fiesta</span>
+          <Sparkles className="w-5 h-5 text-accent" />
+          <span className="font-semibold text-[15px]">Super AI Battle</span>
         </div>
       </header>
 
@@ -116,8 +116,8 @@ export default function PlaySora() {
       <main className="flex-1 overflow-y-auto px-4 md:px-[15%] pt-4 pb-32 custom-scrollbar">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-50 relative top-[-5vh]">
-            <Sparkles className="w-12 h-12 text-emerald-400 mb-4" />
-            <h1 className="text-2xl font-semibold mb-2">Super Fiesta</h1>
+            <Sparkles className="w-12 h-12 text-accent mb-4" />
+            <h1 className="text-2xl font-semibold mb-2">Sora Battle Engine</h1>
             <p className="text-sm">Battle multiple AIs instantly and get the single best answer.</p>
           </div>
         ) : (
@@ -126,17 +126,17 @@ export default function PlaySora() {
               <div key={m.id} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start w-full"}`}>
                 
                 {m.role === "user" ? (
-                  <div className="bg-[#2a2a2a] text-[#ededed] px-5 py-3 rounded-3xl max-w-[85%] text-[15px] shadow-sm">
+                  <div className="bg-accent/10 border border-accent/20 text-foreground px-5 py-3 rounded-3xl max-w-[85%] text-[15px] shadow-sm">
                     {m.content}
                   </div>
                 ) : m.results && m.visibleCount !== undefined ? (
-                  <div className="flex flex-col w-full text-[#ededed]">
+                  <div className="flex flex-col w-full text-foreground">
                     {m.results.slice(0, m.visibleCount).map((res, idx) => {
                       const isLastVisible = idx === m.visibleCount! - 1;
                       const hasMore = m.visibleCount! < m.results!.length;
                       
                       return (
-                        <div key={idx} className={idx > 0 ? "mt-8 pt-8 border-t border-white/10 animate-in fade-in slide-in-from-top-4" : ""}>
+                        <div key={idx} className={idx > 0 ? "mt-8 pt-8 border-t border-panel-border animate-in fade-in slide-in-from-top-4" : ""}>
                           {/* Response Text */}
                           <div className="mb-2">
                             <div className="text-[15px] leading-relaxed whitespace-pre-wrap">
@@ -146,17 +146,21 @@ export default function PlaySora() {
                           
                           {/* Metadata row under response */}
                           <div className="mt-3 flex flex-col gap-3">
-                            <div className="flex items-center gap-4 text-[13px] font-medium text-white/60">
+                            <div className="flex items-center gap-4 text-[13px] font-medium text-foreground">
                               <div className="flex items-center gap-2">
-                                <Box className={`w-4 h-4 ${idx === 0 ? 'text-blue-400' : 'text-purple-400'}`} />
-                                <span>{res.brandId.toLowerCase()}</span>
+                                {res.logo ? (
+                                  <img src={res.logo} alt={res.brandId} className="w-4 h-4 object-contain opacity-80" />
+                                ) : (
+                                  <Box className={`w-4 h-4 ${idx === 0 ? 'text-blue-500' : 'text-purple-500'}`} />
+                                )}
+                                <span className="opacity-80">{res.brandId.toLowerCase()}</span>
                               </div>
                               
                               {/* Ask another AI button - only on the last visible item if there are more */}
                               {isLastVisible && hasMore && (
                                 <button 
                                   onClick={() => handleAskAnother(m.id)}
-                                  className="flex items-center gap-1.5 hover:text-white transition-colors text-emerald-400/80 hover:text-emerald-400"
+                                  className="flex items-center gap-1.5 transition-colors text-emerald-600/80 hover:text-emerald-600 font-bold"
                                 >
                                   <RefreshCw className="w-3.5 h-3.5" />
                                   <span>Ask another AI</span>
@@ -164,11 +168,11 @@ export default function PlaySora() {
                               )}
                             </div>
                             
-                            <div className="flex items-center gap-4 text-white/40">
-                                <button className="hover:text-white transition-colors"><Copy className="w-[14px] h-[14px]" /></button>
-                                <button className="hover:text-white transition-colors"><ThumbsUp className="w-[14px] h-[14px]" /></button>
-                                <button className="hover:text-white transition-colors"><ThumbsDown className="w-[14px] h-[14px]" /></button>
-                                <button className="hover:text-white transition-colors"><Download className="w-[14px] h-[14px]" /></button>
+                            <div className="flex items-center gap-4 text-foreground/70">
+                                <button className="hover:text-foreground transition-colors"><Copy className="w-[14px] h-[14px]" /></button>
+                                <button className="hover:text-foreground transition-colors"><ThumbsUp className="w-[14px] h-[14px]" /></button>
+                                <button className="hover:text-foreground transition-colors"><ThumbsDown className="w-[14px] h-[14px]" /></button>
+                                <button className="hover:text-foreground transition-colors"><Download className="w-[14px] h-[14px]" /></button>
                             </div>
                           </div>
                         </div>
@@ -199,15 +203,15 @@ export default function PlaySora() {
 
       {/* Floating Input Bar */}
       <div className="absolute bottom-6 left-0 right-0 flex justify-center px-4 pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-2xl bg-[#1a1a1a] rounded-full border border-white/10 shadow-2xl flex items-center p-2 pl-4 transition-all focus-within:border-emerald-500/50">
-          <button className="text-white/40 hover:text-white transition-colors p-1">
+        <div className="pointer-events-auto w-full max-w-2xl bg-panel rounded-full border border-panel-border shadow-2xl flex items-center p-2 pl-4 transition-all focus-within:border-emerald-500/50">
+          <button className="text-foreground/60 hover:text-foreground transition-colors p-1">
             <Plus className="w-5 h-5" />
           </button>
           
           <input
             type="text"
             placeholder="Ask me anything..."
-            className="flex-1 bg-transparent border-none text-[15px] text-white placeholder-white/40 focus:outline-none focus:ring-0 px-3 py-2"
+            className="flex-1 bg-transparent border-none text-[15px] text-foreground placeholder-foreground/40 focus:outline-none focus:ring-0 px-3 py-2"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -218,7 +222,7 @@ export default function PlaySora() {
             }}
           />
           
-          <button className="text-white/40 hover:text-white transition-colors p-2">
+          <button className="text-foreground/60 hover:text-foreground transition-colors p-2">
             <Mic className="w-[18px] h-[18px]" />
           </button>
           

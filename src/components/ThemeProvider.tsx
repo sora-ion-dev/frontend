@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type Theme = "dark" | "light";
 
@@ -13,14 +14,39 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme] = useState<Theme>("dark");
+    const [theme, setThemeState] = useState<Theme>("dark");
+    const pathname = usePathname();
 
-    const setTheme = () => {
-        // Theme is locked to dark
+    useEffect(() => {
+        const savedTheme = localStorage.getItem("superai-theme") as Theme;
+        if (savedTheme) {
+            setThemeState(savedTheme);
+        } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+            setThemeState("light");
+        }
+    }, []);
+
+    useEffect(() => {
+        // Enforce dark mode on landing page (/)
+        if (pathname === "/") {
+            document.documentElement.classList.remove("light");
+            return;
+        }
+
+        if (theme === "light") {
+            document.documentElement.classList.add("light");
+        } else {
+            document.documentElement.classList.remove("light");
+        }
+    }, [theme, pathname]);
+
+    const setTheme = (newTheme: Theme) => {
+        setThemeState(newTheme);
+        localStorage.setItem("superai-theme", newTheme);
     };
 
     const toggleTheme = () => {
-        // Theme is locked to dark
+        setTheme(theme === "dark" ? "light" : "dark");
     };
 
     return (

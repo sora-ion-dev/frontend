@@ -406,23 +406,22 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0a0a1a] text-white font-sans overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden transition-colors duration-500">
       {/* Sidebar Overlay (mobile) */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transition-transform duration-300 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:relative md:translate-x-0`}
-        style={{ background: "linear-gradient(180deg, #12123a 0%, #0d0d2e 40%, #0a0a1a 100%)", borderRight: "1px solid rgba(100,80,200,0.15)" }}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transition-transform duration-300 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:relative md:translate-x-0 bg-panel border-r border-panel-border`}
       >
         {/* Logo */}
         <div className="p-6 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)" }}>
             <Sparkles className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-xl font-black tracking-tight text-white">SUPER AI</h1>
-          <button className="ml-auto md:hidden text-white/40 hover:text-white" onClick={() => setSidebarOpen(false)}>
+          <h1 className="text-xl font-black tracking-tight text-foreground">SUPER AI</h1>
+          <button className="ml-auto md:hidden text-muted hover:text-foreground" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -436,7 +435,7 @@ export default function Home() {
               });
             }}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90 active:scale-95"
-            style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)", boxShadow: "0 4px 20px rgba(108,99,255,0.4)" }}
+            style={{ background: "linear-gradient(135deg, #10b981, #3b82f6)", boxShadow: "0 4px 20px rgba(16,185,129,0.3)" }}
           >
             <MessageSquarePlus className="w-4 h-4" /> New Conversation
           </button>
@@ -449,7 +448,7 @@ export default function Home() {
             <input
               type="text"
               placeholder="Search..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-white/20 outline-none focus:border-purple-500/40 transition-all"
+              className="w-full bg-foreground/5 border border-panel-border rounded-xl pl-9 pr-3 py-2.5 text-xs text-foreground placeholder-foreground/40 outline-none focus:border-accent/40 transition-all font-medium"
             />
           </div>
         </div>
@@ -458,8 +457,8 @@ export default function Home() {
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           <button
             onClick={() => setActiveTab("superfiesta")}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "superfiesta" ? "text-white" : "text-white/40 hover:text-white hover:bg-white/5"}`}
-            style={activeTab === "superfiesta" ? { background: "linear-gradient(135deg, #6c63ff33, #a855f733)", border: "1px solid rgba(108,99,255,0.3)" } : {}}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "superfiesta" ? "text-foreground" : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"}`}
+            style={activeTab === "superfiesta" ? { background: "var(--accent-faded)", border: "1px solid var(--accent)" } : {}}
           >
             <Sparkles size={18} className={activeTab === "superfiesta" ? "text-[#a855f7]" : ""} />
             SuperFiesta Mode
@@ -467,15 +466,15 @@ export default function Home() {
 
           <button
             onClick={() => setActiveTab("play_sora")}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "play_sora" ? "text-white" : "text-white/40 hover:text-white hover:bg-white/5"}`}
-            style={activeTab === "play_sora" ? { background: "linear-gradient(135deg, #6c63ff33, #a855f733)", border: "1px solid rgba(108,99,255,0.3)" } : {}}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "play_sora" ? "text-foreground" : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"}`}
+            style={activeTab === "play_sora" ? { background: "var(--accent-faded)", border: "1px solid var(--accent)" } : {}}
           >
             <Zap size={18} className={activeTab === "play_sora" ? "text-[#6c63ff]" : ""} />
             Sora Mode
           </button>
 
           <button
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all"
           >
             <ImageIcon size={18} />
             Image Generator
@@ -483,15 +482,15 @@ export default function Home() {
 
           <button
             onClick={() => setActiveTab("prompt_ai")}
-            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "prompt_ai" ? "text-white" : "text-white/40 hover:text-white hover:bg-white/5"}`}
-            style={activeTab === "prompt_ai" ? { background: "linear-gradient(135deg, #6c63ff33, #a855f733)", border: "1px solid rgba(108,99,255,0.3)" } : {}}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === "prompt_ai" ? "text-foreground" : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"}`}
+            style={activeTab === "prompt_ai" ? { background: "var(--accent-faded)", border: "1px solid var(--accent)" } : {}}
           >
             <Brain size={18} className={activeTab === "prompt_ai" ? "text-[#a855f7]" : ""} />
             Prompt AI
           </button>
 
           <button
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all"
           >
             <Shield size={18} />
             Admin Panel
@@ -499,8 +498,8 @@ export default function Home() {
 
           {/* RECENTS */}
           <div className="pt-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/20 px-4 pb-2">Recents</p>
-            <p className="text-xs text-white/20 italic px-4">No threads yet</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 px-4 pb-2">Recents</p>
+            <p className="text-xs text-foreground/40 italic px-4 font-bold">No threads yet</p>
           </div>
         </nav>
 
@@ -508,42 +507,42 @@ export default function Home() {
         <div className="p-4 border-t border-white/5 space-y-2">
           <button
             onClick={toggleSettings}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all"
           >
             <Settings size={18} />
             Settings
           </button>
 
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)" }}>
-              {session?.user?.name?.substring(0, 1) || "N"}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-foreground/5 border border-panel-border">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm text-white" style={{ background: "linear-gradient(135deg, #10b981, #3b82f6)" }}>
+              {session?.user?.name?.substring(0, 1) || "G"}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="text-xs font-black text-white truncate">PREMIUM ACCESS</p>
-              <p className="text-[10px] text-white/30 truncate">SORA-ION MODE</p>
+              <p className="text-xs font-black text-foreground truncate uppercase">Premium Access</p>
+              <p className="text-[10px] text-foreground/50 truncate uppercase font-bold tracking-tighter">SORA-ION MODE</p>
             </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 relative flex flex-col h-full overflow-hidden" style={{ background: "#0a0a1a" }}>
+      <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-background">
         {/* Header */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 z-40" style={{ background: "rgba(10,10,26,0.8)", backdropFilter: "blur(20px)" }}>
+        <header className="h-16 flex items-center justify-between px-6 border-b border-panel-border z-40 bg-background/80 backdrop-blur-xl">
           <div className="flex items-center gap-4">
-            <button className="md:hidden text-white/40 hover:text-white" onClick={() => setSidebarOpen(true)}>
+            <button className="md:hidden text-foreground/60 hover:text-foreground" onClick={() => setSidebarOpen(true)}>
               <Menu className="w-6 h-6" />
             </button>
-            <h2 className="text-sm font-black tracking-[0.2em] uppercase text-white/60">
+            <h2 className="text-sm font-black tracking-[0.2em] uppercase text-foreground/80">
               {activeTab === "superfiesta" ? "SuperFiesta Mode" : activeTab === "play_sora" ? "Sora Mode" : activeTab === "prompt_ai" ? "Prompt AI" : activeTab.replace("_", " ")}
             </h2>
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={toggleFullScreen} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-white hover:bg-white/5 border border-white/10 transition-all">
+            <button onClick={toggleFullScreen} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-foreground/70 hover:text-foreground hover:bg-foreground/5 border border-panel-border transition-all">
               <Maximize className="w-4 h-4" /> Full Screen
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-white hover:bg-white/5 border border-white/10 transition-all">
+            <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-foreground/70 hover:text-foreground hover:bg-foreground/5 border border-panel-border transition-all">
               <RefreshCw className="w-4 h-4" /> Rotate Keys
             </button>
           </div>

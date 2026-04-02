@@ -4,8 +4,10 @@ import React, { useState, useEffect } from "react";
 import { 
     X, Settings, Brain, Key, Monitor, 
     Check, ExternalLink, ShieldCheck,
-    Code, Sparkles, Briefcase, BarChart4, Globe
+    Code, Sparkles, Briefcase, BarChart4, Globe,
+    Sun, Moon
 } from "lucide-react";
+import { useTheme } from "./ThemeProvider";
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -15,6 +17,7 @@ interface SettingsModalProps {
 type Tab = "general" | "ai" | "profile";
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+    const { theme, setTheme } = useTheme();
     const [activeTab, setActiveTab] = useState<Tab>("general");
     const [persona, setPersona] = useState("Professional");
     const [webSearch, setWebSearch] = useState(false);
@@ -125,8 +128,18 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                             <p className="text-[10px] text-white/30 font-bold">Customize the visual theme of the neural interface</p>
                                         </div>
                                         <div className="flex bg-white/5 p-1 rounded-full border border-white/5">
-                                            {['System', 'Light', 'Dark'].map(m => (
-                                                <button key={m} className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${m === 'Dark' ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}>{m}</button>
+                                            {[
+                                                { name: 'Light', icon: Sun, value: 'light' },
+                                                { name: 'Dark', icon: Moon, value: 'dark' }
+                                            ].map(m => (
+                                                <button 
+                                                    key={m.value} 
+                                                    onClick={() => setTheme(m.value as any)}
+                                                    className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${theme === m.value ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}
+                                                >
+                                                    <m.icon size={12} />
+                                                    {m.name}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>

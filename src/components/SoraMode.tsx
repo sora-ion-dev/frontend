@@ -195,8 +195,8 @@ export default function SoraMode() {
     };
 
     return (
-        <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-colors duration-500 bg-black">
-            <div className="absolute inset-0 liquid-mesh opacity-20 pointer-events-none" />
+        <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-colors duration-500 bg-background text-foreground">
+            <div className="absolute inset-0 liquid-mesh opacity-10 pointer-events-none" />
 
             <div className="flex-1 overflow-y-auto w-full relative hide-scrollbar p-6 md:p-12 pb-64 flex flex-col items-center z-10">
                 {messages.length === 0 ? (
@@ -234,7 +234,8 @@ export default function SoraMode() {
                                                 <img src={msg.image} className="w-full h-full object-cover" alt="User upload" />
                                             </div>
                                         )}
-                                        <div className={`transition-all duration-500 scale-in-center message-bubble message-bubble-user text-white font-bold px-6 py-4 rounded-[1.5rem] shadow-xl`}>
+                                        <div className={`transition-all duration-500 scale-in-center message-bubble message-bubble-user text-foreground font-bold px-6 py-4 rounded-[1.5rem] shadow-xl`}
+                                             style={{ background: "var(--accent-faded)", border: "1px solid var(--accent)" }}>
                                             {msg.content}
                                         </div>
                                     </div>
@@ -362,7 +363,7 @@ export default function SoraMode() {
                         <button
                             onClick={handleSend}
                             disabled={!prompt.trim() || isGlobalStreaming}
-                            className={`p-4 rounded-2xl transition-all duration-300 flex items-center justify-center ${prompt.trim() && !isGlobalStreaming ? 'bg-accent text-white shadow-xl shadow-accent/20 scale-105' : 'bg-muted/20 text-muted grayscale opacity-50'}`}
+                            className={`p-4 rounded-2xl transition-all duration-300 flex items-center justify-center ${prompt.trim() && !isGlobalStreaming ? 'bg-accent text-white shadow-xl shadow-accent/20 scale-105' : 'bg-muted/10 text-muted opacity-50'}`}
                         >
                             {isGlobalStreaming ? (
                                 <Loader2 size={24} className="animate-spin" />

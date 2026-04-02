@@ -4,7 +4,8 @@ import { AIBrand, AIModel, ChatMessage } from "@/types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { vscDarkPlus, prism } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useTheme } from "./ThemeProvider";
 
 interface AIColumnProps {
     brand: AIBrand;
@@ -21,6 +22,7 @@ interface AIColumnProps {
 }
 
 export default function AIColumn({ brand, messages, selectedModelId, onModelChange, isStreaming, rank, onRegenerate, onClearColumn, isEnabled, onToggleEnabled, userStatus }: AIColumnProps) {
+    const { theme } = useTheme();
     const [expandedMsg, setExpandedMsg] = useState<string | null>(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -35,7 +37,7 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
     };
 
     const renderLogo = () => {
-        if (brand.logo.includes("http")) {
+        if (brand.logo.includes("http") || brand.logo.startsWith("/")) {
             return <img src={brand.logo} alt={brand.brandName} className="w-6 h-6 object-contain opacity-80" />;
         }
         return (
@@ -53,18 +55,18 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
             {isFullScreen && <div className="min-w-[250px] max-w-[280px] w-full shrink-0 hidden md:block" />}
             <div
                 className={`flex flex-col flex-1 h-full min-h-[500px] rounded-2xl overflow-hidden transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-50 rounded-none' : ''} ${!isEnabled ? 'opacity-30 grayscale' : 'opacity-100'}`}
-                style={{ background: "linear-gradient(180deg, #0e0e2a 0%, #080820 100%)", border: "1px solid rgba(108,99,255,0.15)" }}
+                style={{ backgroundColor: "var(--panel)", border: "1px solid var(--panel-border)" }}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "rgba(108,99,255,0.1)", background: "rgba(255,255,255,0.02)" }}>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-panel-border bg-foreground/[0.02]">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                         {renderLogo()}
                         <div className="flex flex-col min-w-0">
                             <div className="flex items-center gap-1.5 cursor-pointer group hover:bg-white/5 rounded-lg px-1 transition-all">
-                                <span className="text-sm font-bold text-white truncate">
+                                <span className="text-sm font-bold text-foreground truncate">
                                     {selectedModel ? selectedModel.name : brand.brandName}
                                 </span>
-                                <ChevronDown className="w-3.5 h-3.5 text-white/30 group-hover:text-white/60 flex-shrink-0" />
+                                <ChevronDown className="w-3.5 h-3.5 text-muted/30 group-hover:text-foreground/60 flex-shrink-0" />
                             </div>
                         </div>
                     </div>
@@ -72,7 +74,7 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => onRegenerate(messages[messages.length-1]?.id || "")}
-                            className="p-1.5 text-white/20 hover:text-white/70 hover:bg-white/5 rounded-lg transition-all"
+                            className="p-1.5 text-foreground/20 hover:text-foreground/70 hover:bg-foreground/5 rounded-lg transition-all"
                         >
                             <RefreshCw size={13} />
                         </button>
@@ -84,11 +86,11 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                             <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                         </button>
 
-                        <button className="p-1.5 text-white/20 hover:text-white/70 hover:bg-white/5 rounded-lg transition-all">
+                        <button className="p-1.5 text-foreground/20 hover:text-foreground/70 hover:bg-foreground/5 rounded-lg transition-all">
                             <MoreHorizontal size={13} />
                         </button>
 
-                        <button className="p-1.5 text-white/20 hover:text-white/70 hover:bg-white/5 rounded-lg transition-all" onClick={() => setIsFullScreen(!isFullScreen)}>
+                        <button className="p-1.5 text-foreground/20 hover:text-foreground/70 hover:bg-foreground/5 rounded-lg transition-all" onClick={() => setIsFullScreen(!isFullScreen)}>
                             {isFullScreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
                         </button>
                     </div>
@@ -98,12 +100,12 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 hide-scrollbar">
                     {messages.length === 0 ? (
                         <div className="m-auto text-center space-y-4 opacity-40">
-                            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "rgba(108,99,255,0.1)", border: "1px solid rgba(108,99,255,0.2)" }}>
-                                <Brain size={28} className="text-[#6c63ff]" />
+                            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center bg-accent/10 border border-accent/20">
+                                <Brain size={28} className="text-accent" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-white/60">Neural Connection Idle</p>
-                                <p className="text-xs text-white/30 mt-1">Waiting for uplink...</p>
+                                <p className="text-sm font-bold text-foreground/60">Neural Connection Idle</p>
+                                <p className="text-xs text-foreground/30 mt-1">Waiting for uplink...</p>
                             </div>
                         </div>
                     ) : (
@@ -111,15 +113,15 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                             <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div
                                     className={`max-w-[90%] text-sm leading-relaxed ${msg.role === 'user'
-                                        ? 'text-white px-4 py-2.5 rounded-2xl rounded-tr-sm'
-                                        : 'text-white/85 self-start w-full'
+                                        ? 'text-foreground px-4 py-2.5 rounded-2xl rounded-tr-sm'
+                                        : 'text-foreground self-start w-full'
                                     }`}
-                                    style={msg.role === 'user' ? { background: "linear-gradient(135deg, #6c63ff22, #a855f722)", border: "1px solid rgba(108,99,255,0.2)" } : {}}
+                                    style={msg.role === 'user' ? { background: "var(--accent-faded)", border: "1px solid var(--accent)" } : {}}
                                 >
                                     {msg.role === 'user' ? (
                                         msg.content
                                     ) : (
-                                        <div className="prose prose-invert prose-sm max-w-none prose-p:font-medium prose-headings:font-semibold prose-headings:tracking-tighter">
+                                        <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm max-w-none prose-p:font-medium prose-headings:font-semibold prose-headings:tracking-tighter`}>
                                             <ReactMarkdown
                                                 remarkPlugins={[remarkGfm]}
                                                 components={{
@@ -137,7 +139,7 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                                                     </button>
                                                                 </div>
                                                                 <SyntaxHighlighter
-                                                                    style={vscDarkPlus}
+                                                                    style={theme === 'dark' ? vscDarkPlus : prism}
                                                                     language={match[1]}
                                                                     PreTag="div"
                                                                     customStyle={{ margin: 0, padding: '1.5rem', fontSize: '0.85rem' }}
