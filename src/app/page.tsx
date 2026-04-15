@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { 
   Sparkles, ChevronDown, Zap, Cpu, Command, Network, 
   Shield, Globe, ArrowRight, Instagram, Linkedin, Github, Twitter, 
@@ -12,7 +12,7 @@ import {
 
 // --- ANIMATION VARIANTS ---
 
-const FADE_UP = {
+const FADE_UP: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { 
     opacity: 1, 
@@ -21,7 +21,7 @@ const FADE_UP = {
   }
 };
 
-const STAGGER_CONTAINER = {
+const STAGGER_CONTAINER: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
