@@ -511,8 +511,8 @@ export default function Home() {
         {/* Logo */}
         <div className="p-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transform transition-transform hover:rotate-12" style={{ background: "linear-gradient(135deg, #6c63ff, #a855f7)" }}>
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg transform transition-transform hover:rotate-6 flex items-center justify-center bg-white/5 border border-white/10">
+              <img src="/logos/logo.png" alt="Fiesta AI" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-xl font-black tracking-tight text-foreground">SUPER AI</h1>
           </div>

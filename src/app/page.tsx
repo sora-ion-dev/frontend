@@ -559,8 +559,8 @@ export default function LandingPage() {
           <div className="flex flex-col lg:flex-row justify-between items-start gap-24 mb-40">
             <div className="space-y-16">
               <div className="flex items-center gap-5 justify-center lg:justify-start">
-                <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 flex items-center justify-center border border-white/10 shadow-2xl">
-                  <Sparkles size={28} className="text-purple-400" />
+                <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 flex items-center justify-center border border-white/10 shadow-2xl overflow-hidden">
+                  <img src="/logos/logo.png" alt="Fiesta Network" className="w-full h-full object-cover" />
                 </div>
                 <span className="font-semibold text-4xl tracking-tighter uppercase whitespace-nowrap">Fiesta Network</span>
               </div>

@@ -104,16 +104,23 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                     ) : (
                                         <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-foreground/5 prose-pre:border prose-pre:border-panel-border`}>
                                                 {msg.content.includes("<thought>") ? (
-                                                  <div className="space-y-4">
-                                                    <div className="bg-foreground/5 border-l-4 border-purple-500/50 rounded-r-2xl p-4 mb-4">
-                                                      <div className="flex items-center gap-2 mb-2 text-purple-400 text-[10px] font-black uppercase tracking-widest">
-                                                        <Brain size={14} />
-                                                        Thinking Process
+                                                  <div className="space-y-5">
+                                                    <details className="group bg-panel-border/10 rounded-[2rem] overflow-hidden border border-panel-border/30 transition-all hover:bg-panel-border/20">
+                                                      <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
+                                                        <div className="flex items-center gap-3 text-purple-400/80 group-hover:text-purple-400 transition-colors">
+                                                          <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                                                            <Brain size={16} className="animate-pulse" />
+                                                          </div>
+                                                          <span className="text-[11px] font-black uppercase tracking-[0.2em]">Thinking Process</span>
+                                                        </div>
+                                                        <ChevronDown size={14} className="text-foreground/20 group-open:rotate-180 transition-transform duration-300" />
+                                                      </summary>
+                                                      <div className="px-6 pb-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        <div className="text-[14px] text-foreground/40 font-medium italic leading-relaxed pl-5 border-l-2 border-purple-500/20">
+                                                          {msg.content.match(/<thought>([\s\S]*?)<\/thought>/)?.[1] || "Deep reasoning analysis..."}
+                                                        </div>
                                                       </div>
-                                                      <div className="text-[14px] text-foreground/50 font-medium italic leading-relaxed">
-                                                        {msg.content.match(/<thought>([\s\S]*?)<\/thought>/)?.[1] || "Reasoning..."}
-                                                      </div>
-                                                    </div>
+                                                    </details>
                                                     <ReactMarkdown 
                                                       remarkPlugins={[remarkGfm]}
                                                       components={{

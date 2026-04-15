@@ -27,8 +27,8 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/logos/logo.png",
+    apple: "/logos/logo.png",
   },
   openGraph: {
     title: "Fiesta AI | The Ultimate Neural Dashboard",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     siteName: "Fiesta AI",
     images: [
       {
-        url: "/logo.png",
+        url: "/logos/logo.png",
         width: 1200,
         height: 630,
       },
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Fiesta AI | Elite Model Orchestration",
     description: "Access 31+ AI flagship models in one unified high-fidelity environment.",
-    images: ["/logo.png"],
+    images: ["/logos/logo.png"],
   }
 };
 
