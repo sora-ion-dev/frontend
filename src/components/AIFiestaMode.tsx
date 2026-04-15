@@ -52,26 +52,25 @@ export default function AIFiestaMode({
     };
 
     const handleWheel = (e: React.WheelEvent) => {
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollLeft += e.deltaY;
-        }
+        // Only scroll horizontally if NOT over a column that can scroll vertically
+        // Or remove entirely as per user request to decouple them.
+        // I will remove it to ensure vertical scrolling works inside columns as expected.
     };
 
     const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
 
     return (
-        <div className="h-full flex flex-col overflow-hidden font-sans relative bg-background">
+        <div className="h-full relative overflow-hidden font-sans bg-background group">
 
             {/* Grid display area */}
             <div
                 ref={scrollContainerRef}
-                onWheel={handleWheel}
-                className="flex-1 overflow-x-auto overflow-y-hidden px-4 md:px-6 pt-6 pb-4"
-                style={{ scrollbarWidth: "thin", scrollbarColor: "var(--accent) transparent" }}
+                className="absolute inset-0 overflow-x-auto overflow-y-hidden px-4 md:px-6 pt-6 pb-2 custom-scrollbar"
+                style={{ scrollSnapType: "x mandatory" }}
             >
                 <div className="flex flex-row gap-4 min-w-max h-full">
-                    {fiestaBrands.map((brand) => (
-                        <div key={brand.brandId} className={`w-[400px] flex-shrink-0 h-full transition-all duration-500 ${!enabledModels[brand.brandId] ? 'opacity-30 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
+                    {fiestaBrands.filter(b => enabledModels[b.brandId]).map((brand, bIndex) => (
+                        <div key={brand.brandId} className="w-[85vw] md:w-[400px] flex-shrink-0 h-full scroll-snap-align-start transition-all duration-500 opacity-100 scale-100">
                             <AIColumn
                                 brand={brand}
                                 messages={columnMessages[brand.brandId] || []}
@@ -86,36 +85,41 @@ export default function AIFiestaMode({
                             />
                         </div>
                     ))}
+                        {/* Status Indicator */}
+                        {/* Status Indicator */}
+                        {isStreaming && (
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 border border-accent/20 backdrop-blur-md animate-bounce">
+                                <Sparkles size={12} className="text-accent" />
+                                <span className="text-[10px] font-black text-accent uppercase tracking-widest">Generating 4x Neural Paths</span>
+                            </div>
+                        )}
+                    {fiestaBrands.filter(b => enabledModels[b.brandId]).length === 0 && (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center p-12 opacity-50">
+                            <Brain className="w-12 h-12 mb-4 text-accent" />
+                            <h3 className="text-xl font-bold text-foreground mb-2">Neural Stack Empty</h3>
+                            <p className="text-sm text-foreground/40 max-w-xs">All chat models are currently disabled in settings. Reactive your architecture to start comparing.</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Input Bar at Bottom */}
-            <div className="px-6 pb-6 pt-3 border-t border-panel-border">
-                <div className="max-w-5xl mx-auto flex flex-col gap-3">
-                    {/* Merge Button - shows when there are messages */}
-                    {hasStarted && (
-                        <div className="flex justify-center">
-                            <button
-                                onClick={onMerge}
-                                className="flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95 shadow-lg shadow-accent/20"
-                                style={{ background: "linear-gradient(135deg, #10b981, #3b82f6)" }}
-                            >
-                                <Merge className="w-3.5 h-3.5" /> Generate Consensus
-                            </button>
-                        </div>
-                    )}
+            {/* Floating Input Area with Glassmorphism */}
+            <div className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-12 z-50 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none">
+                <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 pointer-events-auto">
 
-                    <div className="relative flex items-center gap-3 px-4 py-3 rounded-2xl border border-panel-border bg-foreground/[0.03] backdrop-blur-3xl focus-within:border-accent group">
-                        <button className="flex-shrink-0 p-2 text-foreground/20 hover:text-foreground/60 rounded-xl transition-all hover:bg-foreground/5">
+                    {/* Input Bar - high transparency glass style */}
+                    <div className="w-full max-w-2xl relative flex items-center gap-3 px-6 py-2.5 rounded-[2rem] border border-panel-border bg-foreground/5 backdrop-blur-3xl shadow-xl focus-within:border-accent/30 transition-all font-medium">
+                        <button className="flex-shrink-0 p-1 text-foreground/40 hover:text-foreground transition-all">
                             <Plus className="w-5 h-5" />
                         </button>
 
                         <textarea
                             ref={textareaRef}
-                            placeholder="Ask anything to the world's most powerful AIs..."
+                            placeholder={isStreaming ? "Synthesizing intelligence..." : "Enter unified neural prompt..."}
                             rows={1}
-                            className="w-full bg-transparent border-none focus:ring-0 text-foreground text-sm placeholder-foreground/20 resize-none py-1.5 max-h-32 leading-relaxed"
+                            className="w-full bg-transparent border-none focus:ring-0 outline-none text-foreground text-[15px] placeholder-foreground/20 resize-none py-2 max-h-48 leading-relaxed font-normal shadow-none"
                             value={prompt}
+                            disabled={isStreaming}
                             onChange={(e) => {
                                 setPrompt(e.target.value);
                                 e.target.style.height = "auto";
@@ -129,18 +133,28 @@ export default function AIFiestaMode({
                             }}
                         />
 
-                        <button className="flex-shrink-0 p-2 text-foreground/20 hover:text-foreground/60 rounded-xl transition-all hover:bg-foreground/5">
+                        <button className="flex-shrink-0 p-1 text-foreground/40 hover:text-foreground transition-all">
                             <Mic className="w-5 h-5" />
                         </button>
 
                         <button
                             onClick={handleSend}
                             disabled={!prompt.trim() || isStreaming}
-                            className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-20 transition-all active:scale-90 hover:scale-105 text-white shadow-lg shadow-accent/10"
-                            style={{ background: "linear-gradient(135deg, #10b981, #3b82f6)" }}
+                            className="flex-shrink-0 w-8 h-8 flex items-center justify-center disabled:opacity-20 transition-all hover:text-foreground text-foreground/40"
                         >
-                            {isStreaming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                            {isStreaming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 transition-transform group-focus-within:translate-x-1" />}
                         </button>
+                    </div>
+
+                    {/* Mobile Scroll Indicator - Neural Beads */}
+                    <div className="flex items-center gap-1.5 md:hidden">
+                        {fiestaBrands.filter(b => enabledModels[b.brandId]).map((_, i) => (
+                            <div 
+                                key={i} 
+                                className="w-1.5 h-1.5 rounded-full bg-foreground/10 transition-all duration-500"
+                                id={`bead-${i}`}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>

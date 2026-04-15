@@ -2,237 +2,289 @@
 
 import React, { useState, useEffect } from "react";
 import { 
-    X, Settings, Brain, Key, Monitor, 
-    Check, ExternalLink, ShieldCheck,
-    Code, Sparkles, Briefcase, BarChart4, Globe,
-    Sun, Moon
+    X, Settings, Brain, Sparkles, Briefcase, 
+    Monitor, ShieldCheck, Download, Zap, 
+    Gauge, Thermometer, Layers, Check,
+    Smartphone, Moon, Sun, AlertTriangle, Menu
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
+import { MODEL_BRANDS, IMAGE_FIESTA_BRAND_IDS } from "@/types";
 
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    userStatus?: any;
+    sessionImages?: any[];
 }
 
-type Tab = "general" | "ai" | "profile";
+type Tab = "general" | "models" | "advanced" | "history";
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, userStatus, sessionImages = [] }: SettingsModalProps) {
     const { theme, setTheme } = useTheme();
     const [activeTab, setActiveTab] = useState<Tab>("general");
-    const [persona, setPersona] = useState("Professional");
-    const [webSearch, setWebSearch] = useState(false);
+    
+    // AI Parameters
+    const [temperature, setTemperature] = useState(0.7);
+    const [maxTokens, setMaxTokens] = useState(4096);
     const [language, setLanguage] = useState("English (US)");
 
-    // load from localStorage on mount
+    // Enabled Models State (Local)
+    const [enabledModels, setEnabledModels] = useState<Record<string, boolean>>({});
+    const [enabledImageModels, setEnabledImageModels] = useState<Record<string, boolean>>({});
+
     useEffect(() => {
-        const savedPersona = localStorage.getItem("superai_persona");
-        const savedWebSearch = localStorage.getItem("superai_websearch") === "true";
-        const savedLanguage = localStorage.getItem("superai_language");
+        // Load AI Settings
+        const savedTemp = localStorage.getItem("superai_temperature");
+        const savedTokens = localStorage.getItem("superai_max_tokens");
+        if (savedTemp) setTemperature(parseFloat(savedTemp));
+        if (savedTokens) setMaxTokens(parseInt(savedTokens));
 
-        if (savedPersona) setPersona(savedPersona);
-        setWebSearch(savedWebSearch);
-        if (savedLanguage) setLanguage(savedLanguage);
-    }, []);
+        // Load Enabled Models
+        const savedModels = localStorage.getItem("superai_enabled_models");
+        if (savedModels) setEnabledModels(JSON.parse(savedModels));
+        else {
+            const initial: Record<string, boolean> = {};
+            MODEL_BRANDS.forEach(b => initial[b.id] = true);
+            setEnabledModels(initial);
+        }
 
-    // save to localStorage on change
-    const updatePersona = (p: string) => {
-        setPersona(p);
-        localStorage.setItem("superai_persona", p);
+        const savedImgModels = localStorage.getItem("superai_enabled_image_models");
+        if (savedImgModels) setEnabledImageModels(JSON.parse(savedImgModels));
+        else {
+            const initial: Record<string, boolean> = {};
+            IMAGE_FIESTA_BRAND_IDS.forEach(id => initial[id] = true);
+            setEnabledImageModels(initial);
+        }
+    }, [isOpen]);
+
+    const toggleModel = (id: string, isImage: boolean = false) => {
+        if (isImage) {
+            const next = { ...enabledImageModels, [id]: !enabledImageModels[id] };
+            setEnabledImageModels(next);
+            localStorage.setItem("superai_enabled_image_models", JSON.stringify(next));
+        } else {
+            const next = { ...enabledModels, [id]: !enabledModels[id] };
+            setEnabledModels(next);
+            localStorage.setItem("superai_enabled_models", JSON.stringify(next));
+        }
         window.dispatchEvent(new Event("settingsChanged"));
     };
 
-    const toggleWebSearch = () => {
-        const newState = !webSearch;
-        setWebSearch(newState);
-        localStorage.setItem("superai_websearch", String(newState));
+    const saveAdvanced = () => {
+        localStorage.setItem("superai_temperature", temperature.toString());
+        localStorage.setItem("superai_max_tokens", maxTokens.toString());
         window.dispatchEvent(new Event("settingsChanged"));
     };
 
-    const updateLanguage = (l: string) => {
-        setLanguage(l);
-        localStorage.setItem("superai_language", l);
-        window.dispatchEvent(new Event("settingsChanged"));
+    const downloadAllImages = () => {
+        if (sessionImages.length === 0) return;
+        sessionImages.forEach((img, index) => {
+            const link = document.createElement("a");
+            link.href = img.url || img; // Handle both object and string
+            link.download = `superai-session-img-${index + 1}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
     };
 
     if (!isOpen) return null;
+
+    const tokenUsage = userStatus?.tokens_used || 0;
+    const tokenLimit = 3000000;
+    const usagePercent = Math.min((tokenUsage / tokenLimit) * 100, 100);
+    const isOverLimit = tokenUsage >= tokenLimit;
 
     const tabs = [
-        { id: "general", label: "General", icon: Settings },
-        { id: "ai", label: "AI Preferences", icon: Sparkles },
-        { id: "profile", label: "Profile", icon: Briefcase },
+        { id: "general", label: "General", icon: Smartphone },
+        { id: "models", label: "Models", icon: Layers },
+        { id: "advanced", label: "Advanced", icon: Zap },
+        { id: "history", label: "History", icon: Download },
     ];
-
-    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-xl transition-opacity animate-fade-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-xl animate-fade-in" onClick={onClose} />
 
-            <div className="relative w-full max-w-6xl h-[80vh] flex overflow-hidden rounded-[2.5rem] animate-scale-in duration-500 shadow-3xl border border-white/5 bg-[#0a0a0a]">
+            <div className="relative w-full max-w-sm h-[75vh] flex flex-col overflow-hidden rounded-[2.5rem] animate-scale-in border border-panel-border bg-panel shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                 
-                {/* Sidebar Navigation */}
-                <div className="w-72 flex flex-col p-8 border-r border-white/5 bg-black/20">
-                    <div className="flex items-center gap-3 mb-12">
-                        <div className="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center text-accent">
-                            <Brain size={24} />
+                {/* Header */}
+                <div className="px-6 py-5 flex items-center justify-between border-b border-panel-border bg-foreground/5">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-accent/20 rounded-xl text-accent">
+                            <Settings size={18} />
                         </div>
-                        <h2 className="text-xl font-black tracking-tight text-white uppercase italic">Fiesta Pro</h2>
+                        <h2 className="text-sm font-black tracking-tight text-foreground uppercase italic">Neural Settings</h2>
                     </div>
-
-                    <nav className="flex-1 space-y-2">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as Tab)}
-                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${isActive ? "bg-white text-black font-black uppercase tracking-widest text-[10px]" : "hover:bg-white/5 text-muted font-bold text-[11px] uppercase tracking-widest"}`}
-                                >
-                                    <Icon size={18} />
-                                    {tab.label}
-                                </button>
-                            );
-                        })}
-                    </nav>
-
-                    <div className="mt-auto p-6 bg-accent/5 rounded-[2rem] border border-accent/10">
-                        <div className="flex items-center gap-3">
-                            <div className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
-                            <span className="text-[10px] font-black uppercase text-accent tracking-widest">Neural Sync Optimized</span>
-                        </div>
-                    </div>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-foreground/10 text-foreground/40 transition-all">
+                        <X size={18} />
+                    </button>
                 </div>
 
-                {/* Settings Content Area */}
-                <div className="flex-1 flex flex-col bg-[#111111]">
-                    <div className="p-6 flex justify-between items-center border-b border-white/5 bg-black/20">
-                        <h3 className="text-sm font-black uppercase tracking-[0.3em] text-white/40 ml-4">Configuration Core</h3>
-                        <button onClick={onClose} className="p-3 rounded-2xl hover:bg-white/5 text-muted transition-all">
-                            <X size={24} />
-                        </button>
-                    </div>
+                {/* Tab Navigation */}
+                <div className="flex px-2 py-1 gap-1 bg-foreground/5 border-b border-panel-border">
+                    {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as Tab)}
+                                className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 rounded-2xl transition-all ${isActive ? "bg-foreground/10 text-accent font-black shadow-sm" : "text-foreground/40 hover:text-foreground/60"}`}
+                            >
+                                <Icon size={14} />
+                                <span className="text-[9px] font-black uppercase tracking-tighter">{tab.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
 
-                    <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
-                        {activeTab === "general" && (
-                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <div>
-                                    <h4 className="text-4xl font-black mb-4 tracking-tighter">General Params</h4>
-                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">System-wide interface and neural protocol settings</p>
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
+                    {activeTab === "general" && (
+                        <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <section>
+                                <label className="text-[10px] font-black text-foreground/30 uppercase tracking-widest mb-3 block text-center">Protocol Appearance</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button onClick={() => setTheme("dark")} className={`flex flex-col items-center p-3 rounded-2xl border transition-all ${theme === 'dark' ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-foreground/5 border-panel-border text-foreground/40'}`}>
+                                        <Moon size={16} className="mb-2" />
+                                        <span className="text-[10px] font-bold">Dark Mode</span>
+                                    </button>
+                                    <button onClick={() => setTheme("light")} className={`flex flex-col items-center p-3 rounded-2xl border transition-all ${theme === 'light' ? 'bg-accent/10 border-accent/20 text-accent shadow-sm shadow-accent/5' : 'bg-foreground/5 border-panel-border text-foreground/40'}`}>
+                                        <Sun size={16} className="mb-2" />
+                                        <span className="text-[10px] font-bold">Light Mode</span>
+                                    </button>
                                 </div>
+                            </section>
 
-                                <div className="space-y-6">
-                                    <div className="p-8 bg-black/40 border border-white/5 rounded-[2.5rem] flex items-center justify-between">
-                                        <div>
-                                            <p className="font-black text-xs uppercase tracking-widest mb-1">Appearance Mode</p>
-                                            <p className="text-[10px] text-white/30 font-bold">Customize the visual theme of the neural interface</p>
-                                        </div>
-                                        <div className="flex bg-white/5 p-1 rounded-full border border-white/5">
-                                            {[
-                                                { name: 'Light', icon: Sun, value: 'light' },
-                                                { name: 'Dark', icon: Moon, value: 'dark' }
-                                            ].map(m => (
-                                                <button 
-                                                    key={m.value} 
-                                                    onClick={() => setTheme(m.value as any)}
-                                                    className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${theme === m.value ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}
-                                                >
-                                                    <m.icon size={12} />
-                                                    {m.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+                            <section>
+                                <label className="text-[10px] font-black text-foreground/30 uppercase tracking-widest mb-3 block text-center">Linguistic Engine</label>
+                                <select 
+                                    value={language}
+                                    onChange={(e) => setLanguage(e.target.value)}
+                                    className="w-full bg-foreground/5 border border-panel-border rounded-2xl px-4 py-3 text-[11px] font-bold text-foreground outline-none focus:border-accent/40 text-center"
+                                >
+                                    <option>English (Universal)</option>
+                                    <option>Hindi (Localized)</option>
+                                </select>
+                            </section>
+                        </div>
+                    )}
 
-                                    <div className="p-8 bg-black/40 border border-white/5 rounded-[2.5rem] flex items-center justify-between">
-                                        <div>
-                                            <p className="font-black text-xs uppercase tracking-widest mb-1">Interface Language</p>
-                                            <p className="text-[10px] text-white/30 font-bold">Primary localization for synthetic responses</p>
-                                        </div>
-                                        <select className="bg-white/5 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 outline-none text-white appearance-none cursor-pointer">
-                                            <option>English (Global)</option>
-                                            <option>Hindi (Localized)</option>
-                                        </select>
-                                    </div>
+                    {activeTab === "models" && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <section>
+                                <div className="flex items-center justify-between mb-4">
+                                    <label className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Active Chat Stack</label>
+                                    <span className="text-[9px] bg-accent/20 text-accent px-2 py-0.5 rounded-full font-bold">Live Control</span>
                                 </div>
-                            </div>
-                        )}
-
-                        {activeTab === "ai" && (
-                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <div>
-                                    <h4 className="text-4xl font-black mb-4 tracking-tighter">AI Preferences</h4>
-                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Rank and prioritize your 15-model neural cluster</p>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {[
-                                        { name: 'GPT-4o Pro', brand: 'OpenAI', toggle: true },
-                                        { name: 'Claude 3.5 Sonnet', brand: 'Anthropic', toggle: true },
-                                        { name: 'DeepSeek R1', brand: 'DeepSeek', toggle: false },
-                                        { name: 'Moonshot Kimi K2', brand: 'Moonshot AI', toggle: true },
-                                    ].map((m, i) => (
-                                        <div key={m.name} className="p-6 bg-black/40 border border-white/5 rounded-3xl flex items-center justify-between group hover:border-accent/20 transition-all">
-                                            <div className="flex items-center gap-6">
-                                                <div className="text-white/20 group-hover:text-accent transition-colors">
-                                                    <div className="grid grid-cols-2 gap-0.5">
-                                                        <div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" />
-                                                        <div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" />
-                                                        <div className="w-1 h-1 rounded-full bg-current" /><div className="w-1 h-1 rounded-full bg-current" />
-                                                    </div>
+                                <div className="space-y-1.5">
+                                    {MODEL_BRANDS.map(model => (
+                                        <div key={model.id} className="flex items-center justify-between p-2.5 bg-foreground/5 rounded-2xl border border-panel-border hover:border-accent/20 transition-all">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-7 h-7 bg-white rounded-lg p-1 flex items-center justify-center shadow-lg border border-panel-border">
+                                                    <img src={model.logo} alt={model.name} className="w-full h-full object-contain" />
                                                 </div>
-                                                <div className="w-10 h-10 bg-white rounded-xl p-2 flex items-center justify-center">
-                                                    <span className="text-black font-black text-xs">{m.name[0]}</span>
-                                                </div>
-                                                <div>
-                                                    <p className="font-black text-xs uppercase tracking-widest leading-none mb-1">{m.name}</p>
-                                                    <p className="text-[10px] text-white/30 font-bold uppercase tracking-tighter">{m.brand} • Distributed Link</p>
-                                                </div>
+                                                <span className="text-[11px] font-black text-foreground/80 tracking-tight">{model.name}</span>
                                             </div>
-                                            <div className="flex items-center gap-8">
-                                                <select className="bg-transparent text-[10px] font-black uppercase tracking-widest text-white/40 outline-none border-b border-white/10 pb-1">
-                                                    <option>v1.5 Pro</option>
-                                                    <option>Turbo Flux</option>
-                                                </select>
-                                                <button className={`w-12 h-6 rounded-full flex items-center px-1 transition-all ${m.toggle ? 'bg-accent' : 'bg-white/10'}`}>
-                                                    <div className={`w-4 h-4 bg-white rounded-full transition-all ${m.toggle ? 'translate-x-6' : 'translate-x-0'}`} />
-                                                </button>
-                                            </div>
+                                            <button 
+                                                onClick={() => toggleModel(model.id)}
+                                                className={`w-9 h-4.5 rounded-full flex items-center px-0.5 transition-all ${enabledModels[model.id] ? 'bg-accent' : 'bg-foreground/10'}`}
+                                            >
+                                                <div className={`w-3.5 h-3.5 bg-white rounded-full transition-all ${enabledModels[model.id] ? 'translate-x-[1.125rem]' : 'translate-x-0'}`} />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            </section>
+                        </div>
+                    )}
 
-                        {activeTab === "profile" && (
-                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    {activeTab === "advanced" && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <section className="p-4 bg-accent/5 border border-accent/10 rounded-2xl">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <Gauge size={14} className="text-accent" />
+                                        <label className="text-[9px] font-black text-foreground/40 uppercase">Global Capacity</label>
+                                    </div>
+                                    <span className="text-[9px] font-bold text-foreground/30">{tokenUsage.toLocaleString()} / 3M</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-foreground/5 rounded-full overflow-hidden">
+                                    <div 
+                                        className={`h-full transition-all duration-1000 ${isOverLimit ? 'bg-red-500' : 'bg-accent'}`} 
+                                        style={{ width: `${usagePercent}%` }} 
+                                    />
+                                </div>
+                                {isOverLimit && (
+                                    <div className="mt-2 flex items-center gap-1.5 text-red-400">
+                                        <AlertTriangle size={10} />
+                                        <span className="text-[8px] font-black uppercase tracking-tighter">Capacity Limit Reached (Warning)</span>
+                                    </div>
+                                )}
+                            </section>
+
+                            <section className="space-y-5">
                                 <div>
-                                    <h4 className="text-4xl font-black mb-4 tracking-tighter">Identity Core</h4>
-                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Manage your neural identity and authentication</p>
+                                    <div className="flex justify-between mb-2">
+                                        <label className="text-[10px] font-black text-foreground/30 uppercase tracking-widest italic">Neural Variance</label>
+                                        <span className="text-[10px] font-bold text-accent">{temperature}</span>
+                                    </div>
+                                    <input 
+                                        type="range" min="0" max="1.5" step="0.1" 
+                                        value={temperature} 
+                                        onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                                        className="w-full h-1 accent-accent bg-foreground/5 rounded-full appearance-none cursor-pointer"
+                                    />
                                 </div>
 
-                                <div className="p-10 bg-black/40 border border-white/5 rounded-[3rem] flex items-center gap-8">
-                                    <div className="w-24 h-24 bg-accent rounded-full flex items-center justify-center text-4xl font-black text-white shadow-2xl shadow-accent/20">
-                                        JD
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <label className="text-[10px] font-black text-foreground/30 uppercase tracking-widest italic">Inference Depth</label>
+                                        <span className="text-[10px] font-bold text-accent">{maxTokens}</span>
                                     </div>
-                                    <div className="flex-1">
-                                        <h5 className="text-2xl font-black text-white mb-1">John Doe</h5>
-                                        <p className="text-white/30 font-bold uppercase tracking-widest text-[10px] mb-4">Pro Architect • ID: 7749-SX</p>
-                                        <div className="flex gap-3">
-                                            <button className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Edit ID</button>
-                                            <button className="px-6 py-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">Revoke Access</button>
-                                        </div>
-                                    </div>
+                                    <input 
+                                        type="range" min="256" max="8192" step="128" 
+                                        value={maxTokens} 
+                                        onChange={(e) => setMaxTokens(parseInt(e.target.value))}
+                                        className="w-full h-1 accent-accent bg-foreground/5 rounded-full appearance-none cursor-pointer"
+                                    />
                                 </div>
+                                
+                                <button 
+                                    onClick={saveAdvanced}
+                                    className="w-full py-3.5 bg-accent text-black rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all"
+                                >
+                                    Apply Optimization
+                                </button>
+                            </section>
+                        </div>
+                    )}
+
+                    {activeTab === "history" && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="p-6 bg-foreground/5 rounded-[2rem] border border-panel-border flex flex-col items-center text-center shadow-lg">
+                                <div className="w-12 h-12 bg-accent/20 rounded-full flex items-center justify-center text-accent mb-3">
+                                    <Sparkles size={24} />
+                                </div>
+                                <h4 className="text-2xl font-black text-foreground mb-1">{sessionImages.length}</h4>
+                                <p className="text-[10px] text-foreground/30 font-bold mb-4 uppercase tracking-tighter">Session Syntheses</p>
+                                
+                                <button 
+                                    disabled={sessionImages.length === 0}
+                                    onClick={downloadAllImages}
+                                    className="w-full py-3 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-white transition-all disabled:opacity-20"
+                                >
+                                    Export All
+                                </button>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
+                </div>
 
-                    <div className="p-8 border-t border-white/5 flex justify-end bg-black/20">
-                        <button onClick={onClose} className="px-10 py-4 bg-white text-black rounded-full text-xs font-black uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-xl shadow-white/5">
-                            Update Preferences
-                        </button>
-                    </div>
+                {/* Footer */}
+                <div className="px-6 py-4 flex items-center justify-center border-t border-panel-border bg-panel">
+                    <p className="text-[8px] font-black text-foreground/20 uppercase tracking-[0.2em] italic">Super AI • Core Engine v9.0</p>
                 </div>
             </div>
         </div>

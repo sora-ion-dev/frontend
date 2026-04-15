@@ -3,26 +3,44 @@
  * This ensures all API calls use the correct backend URL regardless of deployment.
  */
 
-// On Hugging Face Spaces, the backend is typically on port 7860.
-// We prioritize the environment variable, then try to detect the deployment host.
 const getBackendUrl = () => {
+  // 1. Prioritize official environment variable (Standard for Netlify/Vercel)
   if (process.env.NEXT_PUBLIC_BACKEND_URL) {
-    return process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/$/, "");
+    let url = process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/$/, "");
+    
+    // Auto-convert Hugging Face Space URL to direct API URL
+    // Format: https://huggingface.co/spaces/user/space-name -> https://user-space-name.hf.space
+    if (url.includes("huggingface.co/spaces/")) {
+      const parts = url.split("huggingface.co/spaces/")[1].split("/");
+      if (parts.length >= 2) {
+        const user = parts[0].toLowerCase();
+        const spaceName = parts[1].toLowerCase().replace(/_/g, "-");
+        return `https://${user}-${spaceName}.hf.space`;
+      }
+    }
+    
+    return url;
   }
 
-  // Fallback for browser-side detection
+  // 2. Browser-side detection for dynamic environments
   if (typeof window !== "undefined") {
-    // If we're on a .hf.space domain but no BACKEND_URL is set
-    if (window.location.hostname.includes(".hf.space")) {
-      return `${window.location.protocol}//${window.location.hostname}`;
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+
+    // Detection for Hugging Face Spaces subdomains
+    if (hostname.includes(".hf.space")) {
+      return `${protocol}//${hostname}`;
     }
-    // Specific check for local development if backend is on 7860
-    if (window.location.hostname === "localhost") {
-      return "http://localhost:7860"; 
+    
+    // Detection for local development
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {
+      // Logic for local testing: backend is usually on 7860 (Hugging Face setup)
+      return `${protocol}//${hostname}:7860`; 
     }
   }
 
-  return "http://localhost:8000";
+  // Final fallback (Local dev default)
+  return "http://localhost:7860";
 };
 
 export const BACKEND_URL = getBackendUrl();

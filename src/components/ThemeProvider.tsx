@@ -21,8 +21,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const savedTheme = localStorage.getItem("superai-theme") as Theme;
         if (savedTheme) {
             setThemeState(savedTheme);
-        } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-            setThemeState("light");
+        } else {
+            // Force dark mode as the initial default regardless of system preference
+            setThemeState("dark");
         }
     }, []);
 

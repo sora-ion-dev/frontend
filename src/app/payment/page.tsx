@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { CreditCard, CheckCircle2, ChevronRight, Copy, Loader2, Send } from "lucide-react";
 import { BACKEND_URL } from "@/lib/config";
 
 export default function PaymentPage() {
-    const { data: session, status } = useSession();
+    const session = { user: { email: "guest@superai.com", name: "Guest" } }; // Hardcoded for public access
+    const status = "authenticated";
     const [txnId, setTxnId] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
     if (status === "unauthenticated") {
-        redirect("/login");
+        return <div className="min-h-screen bg-black text-white flex items-center justify-center">Please log in to continue.</div>;
     }
 
     const handleSubmit = async () => {

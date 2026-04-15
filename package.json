@@ -9,10 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@gpt4free/g4f.dev": "^1.1.2",
     "@tailwindcss/typography": "^0.5.19",
+    "@types/jspdf": "^1.3.3",
     "@types/react-syntax-highlighter": "^15.5.13",
     "clsx": "^2.1.1",
+    "duckduckgo-chat-interface": "^1.1.5",
     "framer-motion": "^12.35.0",
+    "free-coding-models": "^0.3.43",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",

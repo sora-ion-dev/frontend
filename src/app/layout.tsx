@@ -1,16 +1,27 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "@/components/AuthProvider";
+import Script from "next/script";
 
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sora-ion-ai.vercel.app"),
-  title: "Super AI | Compare and Battle Global LLMs",
-  description: "Experience the world's most powerful AI models in one place. Compare Gemini, ChatGPT, Claude, and DeepSeek for free with real-time evaluation and routing.",
+  metadataBase: new URL("https://sora-ion-ai.netlify.app"), // Updated candidate for Netlify
+  title: "Fiesta AI | Unified Neural Orchestration & Model Comparison",
+  description: "Experience absolute intelligence. Compare and battle GPT-4o, Claude 3.5, Gemini 1.5, and DeepSeek in real-time. Unified high-fidelity model routing and vision eval.",
+  keywords: [
+    "Fiesta AI",
+    "Model Battle",
+    "LLM Comparison",
+    "Free GPT-4o",
+    "Free Claude 3.5",
+    "Gemini 1.5 Battle",
+    "Unified AI Dashboard",
+    "AI Orchestration",
+    "Best AI Models 2026"
+  ],
   verification: {
     google: "vi6sMrNbzQC1osOVH2v4haUq3o8O2J0eAIJq_b7HJN8",
   },
@@ -20,20 +31,26 @@ export const metadata: Metadata = {
     apple: "/logo.png",
   },
   openGraph: {
-    title: "Super AI | Compare Global LLMs",
-    description: "Battle and Evaluate AI models side-by-side.",
-    url: "https://sora-ion-ai.vercel.app",
-    siteName: "Super AI",
+    title: "Fiesta AI | The Ultimate Neural Dashboard",
+    description: "Battle and Evaluate 31+ flagship AI models side-by-side. Forever free and account-less.",
+    url: "https://sora-ion-ai.netlify.app",
+    siteName: "Fiesta AI",
     images: [
       {
         url: "/logo.png",
-        width: 800,
-        height: 600,
+        width: 1200,
+        height: 630,
       },
     ],
     locale: "en_US",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fiesta AI | Elite Model Orchestration",
+    description: "Access 31+ AI flagship models in one unified high-fidelity environment.",
+    images: ["/logo.png"],
+  }
 };
 
 export default function RootLayout({
@@ -45,9 +62,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={outfit.className} suppressHydrationWarning>
         <ThemeProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          {children}
         </ThemeProvider>
       </body>
     </html>

@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus, prism } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useTheme } from "./ThemeProvider";
+import { jsPDF } from "jspdf";
 
 interface AIColumnProps {
     brand: AIBrand;
@@ -54,86 +55,66 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
         <>
             {isFullScreen && <div className="min-w-[250px] max-w-[280px] w-full shrink-0 hidden md:block" />}
             <div
-                className={`flex flex-col flex-1 h-full min-h-[500px] rounded-2xl overflow-hidden transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-50 rounded-none' : ''} ${!isEnabled ? 'opacity-30 grayscale' : 'opacity-100'}`}
-                style={{ backgroundColor: "var(--panel)", border: "1px solid var(--panel-border)" }}
+                className={`flex flex-col flex-1 h-full min-h-[500px] overflow-hidden transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-50 rounded-none' : ''} ${!isEnabled ? 'opacity-30 grayscale' : 'opacity-100'}`}
+                style={{ backgroundColor: "transparent", border: "none" }}
             >
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-panel-border bg-foreground/[0.02]">
+                {/* Header - photo style */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-panel-border bg-panel">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                         {renderLogo()}
-                        <div className="flex flex-col min-w-0">
-                            <div className="flex items-center gap-1.5 cursor-pointer group hover:bg-white/5 rounded-lg px-1 transition-all">
-                                <span className="text-sm font-bold text-foreground truncate">
-                                    {selectedModel ? selectedModel.name : brand.brandName}
-                                </span>
-                                <ChevronDown className="w-3.5 h-3.5 text-muted/30 group-hover:text-foreground/60 flex-shrink-0" />
-                            </div>
+                        <div className="flex items-center gap-1 cursor-pointer group hover:bg-foreground/5 rounded-lg px-2 py-1 transition-all">
+                            <span className="text-[15px] font-bold text-foreground opacity-90 truncate">
+                                {selectedModel ? selectedModel.name : brand.brandName}
+                            </span>
+                            <ChevronDown className="w-4 h-4 text-foreground/20 group-hover:text-foreground/60 transition-colors" />
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => onRegenerate(messages[messages.length-1]?.id || "")}
-                            className="p-1.5 text-foreground/20 hover:text-foreground/70 hover:bg-foreground/5 rounded-lg transition-all"
-                        >
-                            <RefreshCw size={13} />
+                    <div className="flex items-center gap-3 text-foreground/20">
+                        <button className="hover:text-foreground transition-colors">
+                            <RefreshCw size={14} />
                         </button>
-
                         <button
                             onClick={onToggleEnabled}
-                            className={`w-9 h-5 rounded-full flex items-center transition-all px-[2px] flex-shrink-0 ${isEnabled ? 'bg-[#6c63ff]' : 'bg-white/10'}`}
+                            className={`w-10 h-5 rounded-full flex items-center transition-all px-[2px] border border-panel-border ${isEnabled ? 'bg-accent' : 'bg-foreground/5'}`}
                         >
-                            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                        </button>
-
-                        <button className="p-1.5 text-foreground/20 hover:text-foreground/70 hover:bg-foreground/5 rounded-lg transition-all">
-                            <MoreHorizontal size={13} />
-                        </button>
-
-                        <button className="p-1.5 text-foreground/20 hover:text-foreground/70 hover:bg-foreground/5 rounded-lg transition-all" onClick={() => setIsFullScreen(!isFullScreen)}>
-                            {isFullScreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                            <div className={`w-4 h-4 rounded-full bg-white shadow-lg transition-transform duration-200 ${isEnabled ? 'translate-x-[20px]' : 'translate-x-0'}`} />
                         </button>
                     </div>
                 </div>
 
-                {/* Chat Area */}
-                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 hide-scrollbar">
+                {/* Chat Area - photo style */}
+                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 hide-scrollbar custom-scrollbar bg-panel">
                     {messages.length === 0 ? (
-                        <div className="m-auto text-center space-y-4 opacity-40">
-                            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center bg-accent/10 border border-accent/20">
-                                <Brain size={28} className="text-accent" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-bold text-foreground/60">Neural Connection Idle</p>
-                                <p className="text-xs text-foreground/30 mt-1">Waiting for uplink...</p>
-                            </div>
+                        <div className="m-auto text-center space-y-4 opacity-10">
+                            <Brain size={48} className="mx-auto" />
+                            <p className="text-sm font-bold tracking-widest uppercase">Select Uplink</p>
                         </div>
                     ) : (
                         messages.map((msg, idx) => (
                             <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div
-                                    className={`max-w-[90%] text-sm leading-relaxed ${msg.role === 'user'
-                                        ? 'text-foreground px-4 py-2.5 rounded-2xl rounded-tr-sm'
-                                        : 'text-foreground self-start w-full'
+                                    className={`relative ${msg.role === 'user'
+                                        ? 'max-w-[85%] text-[15px] leading-[1.6] text-foreground bg-accent/10 border border-accent/20 px-5 py-3 rounded-[1.5rem]'
+                                        : 'text-[16px] leading-[1.7] text-foreground self-start w-full font-bold py-2'
                                     }`}
-                                    style={msg.role === 'user' ? { background: "var(--accent-faded)", border: "1px solid var(--accent)" } : {}}
                                 >
                                     {msg.role === 'user' ? (
                                         msg.content
                                     ) : (
-                                        <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm max-w-none prose-p:font-medium prose-headings:font-semibold prose-headings:tracking-tighter`}>
+                                        <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-foreground/5 prose-pre:border prose-pre:border-panel-border`}>
                                             <ReactMarkdown
                                                 remarkPlugins={[remarkGfm]}
                                                 components={{
                                                     code({ node, inline, className, children, ...props }: any) {
                                                         const match = /language-(\w+)/.exec(className || "");
                                                         return !inline && match ? (
-                                                            <div className="rounded-2xl overflow-hidden border-2 border-panel-border my-4 shadow-xl">
-                                                                <div className="bg-panel-border px-4 py-1.5 flex justify-between items-center">
-                                                                    <span className="text-[10px] font-semibold tracking-widest text-muted">{match[1]}</span>
+                                                            <div className="rounded-2xl overflow-hidden border border-panel-border my-4 shadow-2xl">
+                                                                <div className="bg-foreground/5 px-4 py-1.5 flex justify-between items-center">
+                                                                    <span className="text-[10px] font-black tracking-widest text-[#10b981]">{match[1]}</span>
                                                                     <button 
                                                                         onClick={() => navigator.clipboard.writeText(String(children))}
-                                                                        className="text-muted hover:text-accent"
+                                                                        className="text-foreground/20 hover:text-foreground"
                                                                     >
                                                                         <Copy size={12} />
                                                                     </button>
@@ -142,14 +123,14 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                                                     style={theme === 'dark' ? vscDarkPlus : prism}
                                                                     language={match[1]}
                                                                     PreTag="div"
-                                                                    customStyle={{ margin: 0, padding: '1.5rem', fontSize: '0.85rem' }}
+                                                                    customStyle={{ margin: 0, padding: '1.5rem', fontSize: '0.85rem', background: 'transparent' }}
                                                                     {...props}
                                                                 >
                                                                     {String(children).replace(/\n$/, "")}
                                                                 </SyntaxHighlighter>
                                                             </div>
                                                         ) : (
-                                                            <code className={`${className} bg-foreground/10 px-1.5 py-0.5 rounded-md font-semibold`} {...props}>
+                                                            <code className={`${className} bg-foreground/10 px-1.5 py-0.5 rounded-md font-bold text-foreground`} {...props}>
                                                                 {children}
                                                             </code>
                                                         );
@@ -164,32 +145,63 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                 </div>
 
                                 {msg.role === 'assistant' && !msg.isStreaming && msg.content && (
-                                    <div className="flex items-center gap-4 mt-2 ml-1 opacity-20 hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-4 mt-2 ml-1 text-foreground/30">
                                         <button
                                             onClick={() => navigator.clipboard.writeText(msg.content)}
-                                            className="p-1 hover:text-accent transition-colors"
+                                            className="hover:text-foreground transition-colors p-1"
                                             title="Copy"
                                         >
                                             <Copy size={16} />
                                         </button>
-                                        <button className="p-1 hover:text-accent transition-colors">
+                                        <button className="hover:text-foreground transition-colors p-1">
                                             <ThumbsUp size={16} />
                                         </button>
-                                        <button className="p-1 hover:text-accent transition-colors">
+                                        <button className="hover:text-foreground transition-colors p-1">
                                             <ThumbsDown size={16} />
                                         </button>
                                         <button
                                             onClick={() => {
-                                                const blob = new Blob([msg.content], { type: 'text/markdown' });
-                                                const url = URL.createObjectURL(blob);
-                                                const a = document.createElement('a');
-                                                a.href = url;
-                                                a.download = `${brand.brandName}-packet.md`;
-                                                a.click();
-                                                URL.revokeObjectURL(url);
+                                                console.log("PDF Generation Triggered for AI Response");
+                                                const doc = new jsPDF();
+                                                const pageWidth = doc.internal.pageSize.getWidth();
+                                                const pageHeight = doc.internal.pageSize.getHeight();
+                                                const margin = 15;
+                                                const maxWidth = pageWidth - (margin * 2);
+                                                
+                                                // Create a descriptive filename
+                                                const safeModel = brand.brandName.substring(0, 10).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                                                const filename = `superai-response-${safeModel}-${Date.now()}.pdf`;
+
+                                                doc.setFont("helvetica", "bold");
+                                                doc.setFontSize(16);
+                                                doc.text("SUPER AI RESPONSE", margin, 20);
+                                                
+                                                doc.setFontSize(10);
+                                                doc.setFont("helvetica", "normal");
+                                                doc.text(`Model: ${selectedModel.name} (${brand.brandName})`, margin, 28);
+                                                doc.text(`Date: ${new Date().toLocaleString()}`, margin, 34);
+                                                
+                                                doc.setLineWidth(0.5);
+                                                doc.line(margin, 38, pageWidth - margin, 38);
+                                                
+                                                doc.setFontSize(11);
+                                                const lines = doc.splitTextToSize(msg.content, maxWidth);
+                                                
+                                                let cursorY = 48;
+                                                lines.forEach((line: string) => {
+                                                    if (cursorY > pageHeight - 20) {
+                                                        doc.addPage();
+                                                        cursorY = 20;
+                                                    }
+                                                    doc.text(line, margin, cursorY);
+                                                    cursorY += 7;
+                                                });
+                                                
+                                                // Using doc.save with explicit filename
+                                                doc.save(filename);
                                             }}
-                                            className="p-1 hover:text-accent transition-colors"
-                                            title="Download"
+                                            className="hover:text-foreground transition-colors p-1"
+                                            title="Download PDF"
                                         >
                                             <Download size={16} />
                                         </button>
@@ -219,7 +231,7 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                     <X size={24} />
                                 </button>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-10 leading-relaxed custom-scrollbar prose-invert prose-lg max-w-none font-medium">
+                            <div className={`flex-1 overflow-y-auto p-10 leading-relaxed custom-scrollbar prose ${theme === 'dark' ? 'prose-invert' : ''} prose-lg max-w-none font-bold text-foreground`}>
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{expandedMsg}</ReactMarkdown>
                             </div>
                         </div>

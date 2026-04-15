@@ -1,35 +1,71 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Image as ImageIcon, Crown, AlertCircle } from "lucide-react";
+import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Image as ImageIcon, Crown, AlertCircle, ChevronUp, ChevronDown, Paperclip, MoreHorizontal } from "lucide-react";
 import { BACKEND_URL } from "@/lib/config";
+import { useTheme } from "./ThemeProvider";
+import { jsPDF } from "jspdf";
 
 interface RankedModel {
     id: string;
     name: string;
     brand: string;
     logo: string;
+    description?: string;
 }
+
+const SORA_CHAMPIONS: RankedModel[] = [
+    {"id": "openai/gpt-4o-mini", "name": "GPT-4o Mini", "brand": "OpenAI", "logo": "/logos/gpt4o_mini.svg", "description": "Fast and intelligent for everyday tasks."},
+    {"id": "nvidia/phi-4", "name": "Phi-4 Multimodal", "brand": "Microsoft", "logo": "/logos/microsoft.svg", "description": "Advanced multimodal reasoning and logic."},
+    {"id": "openai/gpt-4o", "name": "GPT-4o Pro", "brand": "OpenAI", "logo": "/logos/gpt4o_pro.svg", "description": "Flagship intelligence for complex problems."},
+    {"id": "meta-llama/llama-4-scout", "name": "Llama 4 Scout", "brand": "Meta", "logo": "/logos/llama33.svg", "description": "Next-gen open intelligence from Meta."},
+    {"id": "qwen/qwen3-32b", "name": "Qwen 3-32B", "brand": "Qwen", "logo": "/logos/qwen.svg", "description": "Powerful reasoning and coding powerhouse."},
+    {"id": "nvidia/deepseek-v32", "name": "DeepSeek V3.2", "brand": "DeepSeek", "logo": "/logos/deepseek_chat.svg", "description": "Elite efficiency with superior knowledge base."},
+    {"id": "nvidia/falcon3-7b", "name": "Falcon 3-7B", "brand": "TII", "logo": "/logos/falcon.svg", "description": "Sleek and robust for creative outputs."},
+    {"id": "google/gemini-3.1-flash-lite", "name": "Gemini 3.1 Flash Lite", "brand": "Google", "logo": "/logos/gemini_flash.svg", "description": "Lightweight and incredibly fast reasoning."},
+    {"id": "arcee/trinity-large", "name": "Trinity Large", "brand": "Arcee AI", "logo": "/logos/trinity_large.svg", "description": "Domain-specific expertise and large context."},
+    {"id": "minimax/minimax-m2.5", "name": "Minimax M2.5", "brand": "Minimax", "logo": "/logos/minimax.svg", "description": "Hyper-realistic chatting and reasoning."},
+    {"id": "liquid/lfm-2.5", "name": "Liquid LFM", "brand": "Liquid AI", "logo": "/logos/liquid.svg", "description": "Liquid Neural Network pioneer for precision."},
+    {"id": "moonshot/kimi-k2", "name": "Kimi K2", "brand": "Moonshot", "logo": "/logos/moonshot.svg", "description": "Next-level context handling and deep insight."},
+    {"id": "xai/grok-3-mini", "name": "Grok-3 Mini", "brand": "xAI", "logo": "/logos/xai.svg", "description": "Hyper-intelligent and efficient assistant from xAI."}
+];
 
 interface SoraMessage {
     id: string;
     role: "user" | "assistant";
     content: string;
-    image?: string; // Base64 image
-    rankings?: RankedModel[];
-    currentRankIndex?: number;
+    image?: string;
     isStreaming?: boolean;
     error?: boolean;
 }
 
-export default function SoraMode() {
+interface SoraModeProps {
+    enabledModels: Record<string, boolean>;
+}
+
+export default function SoraMode({ enabledModels = {} }: SoraModeProps) {
+    const { theme } = useTheme();
     const sessionEmail = "public-user";
     const [messages, setMessages] = useState<SoraMessage[]>([]);
     const [prompt, setPrompt] = useState("");
     const [isGlobalStreaming, setIsGlobalStreaming] = useState(false);
+    const [selectedModel, setSelectedModel] = useState<RankedModel>(SORA_CHAMPIONS[0]);
+    
+    // Filter available champions based on global settings
+    const availableChampions = SORA_CHAMPIONS.filter(c => enabledModels[c.id] !== false);
+
+    useEffect(() => {
+        if (enabledModels && !enabledModels[selectedModel.id]) {
+            const fallback = availableChampions[0];
+            if (fallback) setSelectedModel(fallback);
+        }
+    }, [enabledModels, selectedModel.id, availableChampions]);
+
+    const [isSelectorOpen, setIsSelectorOpen] = useState(false);
     const [image, setImage] = useState<string | null>(null);
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const selectorRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,7 +75,17 @@ export default function SoraMode() {
         scrollToBottom();
     }, [messages]);
 
-    const streamAnswer = async (msgId: string, modelId: string, userPrompt: string, rankings: RankedModel[], rankIndex: number) => {
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (selectorRef.current && !selectorRef.current.contains(event.target as Node)) {
+                setIsSelectorOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const streamAnswer = async (msgId: string, modelId: string, userPrompt: string) => {
         try {
             const res = await fetch(`${BACKEND_URL}/chat/stream`, {
                 method: "POST",
@@ -80,18 +126,10 @@ export default function SoraMode() {
                                 if (data.chunk) {
                                     fullText += data.chunk;
                                     setMessages(prev => prev.map(m =>
-                                        m.id === msgId ? {
-                                            ...m,
-                                            content: fullText,
-                                            rankings,
-                                            currentRankIndex: rankIndex,
-                                            isStreaming: true
-                                        } : m
+                                        m.id === msgId ? { ...m, content: fullText, isStreaming: true } : m
                                     ));
                                 }
-                            } catch (e) {
-                                // Ignore partial json
-                            }
+                            } catch (e) { }
                         }
                     }
                 }
@@ -102,16 +140,12 @@ export default function SoraMode() {
             ));
         } catch (error) {
             console.error("Model stream failed:", modelId, error);
-            const filteredRankings = rankings.filter(r => r.id !== modelId);
-
             setMessages(prev => prev.map(m =>
                 m.id === msgId ? {
                     ...m,
                     content: "Neural link severed. This model could be temporarily offline.",
                     isStreaming: false,
-                    error: true,
-                    rankings: filteredRankings,
-                    currentRankIndex: rankIndex
+                    error: true
                 } : m
             ));
         } finally {
@@ -130,224 +164,197 @@ export default function SoraMode() {
 
         setMessages((prev: SoraMessage[]) => [
             ...prev,
-            { id: userMsgId, role: "user", content: currentPrompt, image: image || undefined },
+            { id: userMsgId, role: "user", content: currentPrompt },
             { id: assistantMsgId, role: "assistant", content: "", isStreaming: true }
         ]);
 
-        const currentImage = image;
         setImage(null);
-
-        try {
-            const rankRes = await fetch(`${BACKEND_URL}/chat/sora_rank`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-user-email": sessionEmail
-                },
-                body: JSON.stringify({
-                    prompt: currentPrompt,
-                    image: currentImage,
-                    user_email: sessionEmail
-                })
-            });
-
-            if (!rankRes.ok) throw new Error("Failed to get ranking");
-            const data = await rankRes.json();
-            const rankings: RankedModel[] = data.rankings || [];
-
-            if (rankings.length > 0) {
-                await streamAnswer(assistantMsgId, rankings[0].id, currentPrompt, rankings, 0);
-            } else {
-                setMessages(prev => prev.map(m =>
-                    m.id === assistantMsgId ? { ...m, content: "Sora Logic Engine failed to find a valid route.", isStreaming: false, error: true } : m
-                ));
-                setIsGlobalStreaming(false);
-            }
-        } catch (e) {
-            setMessages(prev => prev.map(m =>
-                m.id === assistantMsgId ? { ...m, content: "Neural Interface busy. Sora is currently optimizing another sector.", isStreaming: false, error: true } : m
-            ));
-            setIsGlobalStreaming(false);
-        }
-    };
-
-    const handleAskAnother = (msgId: string) => {
-        if (isGlobalStreaming) return;
-
-        const msgIndex = messages.findIndex(m => m.id === msgId);
-        if (msgIndex <= 0) return;
-
-        const msg = messages[msgIndex];
-        const userMsg = messages[msgIndex - 1];
-
-        if (!msg.rankings || msg.currentRankIndex === undefined) return;
-
-        const nextIndex = msg.currentRankIndex + 1;
-        if (nextIndex >= msg.rankings.length) return;
-
-        setIsGlobalStreaming(true);
-        setMessages(prev => prev.map(m =>
-            m.id === msgId ? { ...m, content: "", isStreaming: true, currentRankIndex: nextIndex } : m
-        ));
-
-        streamAnswer(msgId, msg.rankings[nextIndex].id, userMsg.content, msg.rankings, nextIndex);
+        await streamAnswer(assistantMsgId, selectedModel.id, currentPrompt);
     };
 
     return (
-        <div className="flex-1 flex flex-col h-full relative overflow-hidden transition-colors duration-500 bg-background text-foreground">
-            <div className="absolute inset-0 liquid-mesh opacity-10 pointer-events-none" />
+        <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-background text-foreground font-semibold">
+            {/* Subtle Gradient background elements */}
+            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+
+            {/* Headers removed as per user request */}
 
             <div className="flex-1 overflow-y-auto w-full relative hide-scrollbar p-6 md:p-12 pb-64 flex flex-col items-center z-10">
-                {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center max-w-2xl mx-auto space-y-8 animate-float">
-                        <div className="w-20 h-20 rounded-3xl bg-accent/5 flex items-center justify-center border border-accent/10 shadow-2xl overflow-hidden p-3">
-                            <img src="/logo.png" alt="Super AI Logo" className="w-full h-full object-contain" />
-                        </div>
-                        <div className="space-y-2">
-                            <h2 className="text-4xl font-black text-foreground tracking-tight uppercase tracking-widest">Sora Routing Engine</h2>
-                            <p className="text-muted text-[10px] font-black leading-relaxed tracking-[0.3em] uppercase">
-                                Dynamic AI Election • Neural Optimization • v4.0
-                            </p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                            <div className="p-6 glass-panel border border-panel-border rounded-3xl text-left space-y-2 hover:border-accent/20 transition-all group">
-                                <Brain className="text-accent" size={20} />
-                                <h3 className="font-black text-foreground text-xs uppercase">Intelligent Routing</h3>
-                                <p className="text-[10px] text-muted font-bold leading-relaxed">Automatically analyzes your query to find the model with the highest success probability.</p>
+                <div className="w-full max-w-4xl space-y-12 mb-20">
+                    {messages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-24 text-center">
+                            <div className="relative mb-10 group">
+                                <div className="absolute inset-0 bg-accent/20 rounded-full blur-3xl group-hover:bg-accent/30 transition-all duration-700" />
+                                <div className="relative p-6 rounded-[2.5rem] bg-panel border border-panel-border shadow-2xl">
+                                    <img src={selectedModel.logo} alt={selectedModel.name} className="w-20 h-20 object-contain" />
+                                </div>
                             </div>
-                            <div className="p-6 glass-panel border border-panel-border rounded-3xl text-left space-y-2 hover:border-accent/20 transition-all group">
-                                <ShieldCheck className="text-green-500" size={20} />
-                                <h3 className="font-black text-foreground text-xs uppercase">Resilient Execution</h3>
-                                <p className="text-[10px] text-muted font-bold leading-relaxed">If one AI sector fails, Sora immediately reroutes your request to a secondary core.</p>
+                            <div className="space-y-4 max-w-lg">
+                                <h1 className="text-4xl font-bold text-foreground tracking-tight">Sora Targeted Mode</h1>
+                                <p className="text-foreground/40 text-sm font-medium leading-relaxed">
+                                    Experience the pure potential of {selectedModel.name}. This dedicated channel is optimized for high-fidelity responses and deep reasoning.
+                                </p>
+                                <div className="flex items-center justify-center gap-3 pt-4">
+                                    <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-[10px] text-accent">Real-time Stream</div>
+                                    <div className="px-3 py-1 bg-foreground/5 border border-panel-border rounded-full text-[10px] text-foreground/40">Handoff Enabled</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="w-full max-w-4xl space-y-12 mb-20 animate-in fade-in duration-700">
-                        {messages.map((msg, idx) => (
-                            <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-3`}>
-                                {msg.role === 'user' ? (
-                                    <div className="flex flex-col items-end gap-2 max-w-[95%] md:max-w-[85%]">
-                                        {msg.image && (
-                                            <div className="w-48 h-48 rounded-2xl overflow-hidden border-2 border-panel-border shadow-lg mb-2">
-                                                <img src={msg.image} className="w-full h-full object-cover" alt="User upload" />
+                    ) : (
+                        <div className="space-y-12 animate-in fade-in duration-500">
+                            {messages.map((msg) => (
+                                <div key={msg.id} className={`w-full flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-2`}>
+                                    <div className={`relative px-4 py-3 ${msg.role === 'user' 
+                                        ? 'bg-accent/10 text-foreground border border-accent/20 rounded-[1.5rem] max-w-[85%] text-[15px]' 
+                                        : 'w-full text-foreground text-[16px] leading-[1.7] font-normal py-2'}`}>
+                                        
+                                        {msg.role === 'assistant' && (
+                                            <div className="flex items-center gap-2 mb-3 text-foreground/40">
+                                                <div className="w-6 h-6 rounded-lg overflow-hidden border border-panel-border p-1 bg-foreground/5">
+                                                    <img src={selectedModel.logo} alt="" className="w-full h-full object-contain" />
+                                                </div>
+                                                <span className="text-[12px] font-bold">{selectedModel.name}</span>
                                             </div>
                                         )}
-                                        <div className={`transition-all duration-500 scale-in-center message-bubble message-bubble-user text-foreground font-bold px-6 py-4 rounded-[1.5rem] shadow-xl`}
-                                             style={{ background: "var(--accent-faded)", border: "1px solid var(--accent)" }}>
-                                            {msg.content}
+
+                                        <div className="whitespace-pre-wrap">
+                                            {msg.error ? (
+                                                <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/10 text-red-500/80 italic text-sm flex items-center gap-3">
+                                                    <AlertCircle size={16} />
+                                                    Neural link interrupted.
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {msg.content}
+                                                    {msg.isStreaming && <span className="inline-block w-2.5 h-2.5 bg-accent/40 animate-pulse ml-2 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.3)]"></span>}
+                                                </>
+                                            )}
                                         </div>
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col w-full">
-                                        {/* Winner Badge for 1st Answer */}
-                                        {msg.currentRankIndex === 0 && !msg.isStreaming && !msg.error && (
-                                            <div className="flex items-center gap-2 mb-2 ml-2">
-                                                <Crown className="text-orange-400" size={16} />
-                                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">Sora Champion Recommendation</span>
-                                            </div>
-                                        )}
-                                        <div className={`message-bubble message-bubble-ai text-foreground self-start w-full px-4 py-6 rounded-[2rem] border-2 ${msg.currentRankIndex === 0 ? 'border-orange-500/30 bg-orange-500/5' : 'border-panel-border bg-card/10'} relative overflow-hidden transition-all ${msg.isStreaming ? 'opacity-80' : ''}`}>
-                                            {msg.isStreaming && !msg.content && (
-                                                <div className="flex items-center gap-4 py-4 px-2">
-                                                    <Loader2 size={24} className="animate-spin text-accent" />
-                                                    <span className="text-sm font-black text-muted uppercase tracking-widest">Neural Sorting...</span>
-                                                </div>
-                                            )}
-                                            {msg.content && (
-                                                <div className="flex flex-col gap-3">
-                                                    {msg.rankings && msg.currentRankIndex !== undefined && (
-                                                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-accent/80 mb-2">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                                                            Active Route: {msg.rankings[msg.currentRankIndex].name}
-                                                        </div>
-                                                    )}
-                                                    <div className={`transition-all duration-500 scale-in-center text-[16px] leading-relaxed whitespace-pre-wrap font-medium`}>
-                                                        {msg.content}
-                                                        {msg.isStreaming && <span className="inline-block w-2 h-5 bg-accent/50 animate-pulse ml-2 align-middle rounded-full"></span>}
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {!msg.content && !msg.isStreaming && msg.error && (
-                                                <div className="flex flex-col gap-2 py-4">
-                                                    <div className="text-red-400 font-bold uppercase tracking-widest text-xs flex items-center gap-2">
-                                                        <AlertCircle size={14} />
-                                                        Ranking Engine Alert
-                                                    </div>
-                                                    <div className="text-muted text-sm italic">
-                                                        The top ranked model failed to respond. You can try rerouting below.
-                                                    </div>
-                                                </div>
-                                            )}
 
-                                            {!msg.isStreaming && msg.rankings && msg.currentRankIndex !== undefined && (
-                                                <div className="mt-6 flex flex-col gap-4">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="flex items-center gap-2 text-muted hover:text-foreground transition-colors cursor-default">
-                                                            <img
-                                                                src={msg.rankings[msg.currentRankIndex].logo}
-                                                                className="w-4 h-4 object-contain opacity-80"
-                                                                alt={msg.rankings[msg.currentRankIndex].brand}
-                                                            />
-                                                            <span className="text-xs font-medium tracking-tight">
-                                                                {msg.rankings[msg.currentRankIndex].id}
-                                                            </span>
-                                                        </div>
-
-                                                        {msg.currentRankIndex < msg.rankings.length - 1 && !isGlobalStreaming && (
-                                                            <button
-                                                                onClick={() => handleAskAnother(msg.id)}
-                                                                className="flex items-center gap-1.5 text-muted hover:text-orange-400 transition-all text-xs font-black uppercase tracking-widest border border-panel-border px-4 py-2 rounded-xl hover:bg-orange-500/5 hover:border-orange-500/20"
-                                                            >
-                                                                <RefreshCw size={12} className="animate-spin-slow" />
-                                                                Reroute to Next AI (Rank #{msg.currentRankIndex + 2})
-                                                            </button>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex items-center gap-3">
-                                                        <button className="p-1.5 text-muted hover:text-foreground transition-colors" title="Copy"><Copy size={16} /></button>
-                                                        <button className="p-1.5 text-muted hover:text-foreground transition-colors" title="Like"><ThumbsUp size={16} /></button>
-                                                        <button className="p-1.5 text-muted hover:text-foreground transition-colors" title="Dislike"><ThumbsDown size={16} /></button>
-                                                        <button className="p-1.5 text-muted hover:text-foreground transition-colors" title="Download"><Download size={16} /></button>
-                                                    </div>
-                                                </div>
-                                            )}
+                                    {msg.role === 'assistant' && !msg.isStreaming && msg.content && (
+                                        <div className="flex items-center gap-4 mt-2 ml-1 text-foreground/30">
+                                            <button 
+                                                onClick={() => navigator.clipboard.writeText(msg.content)}
+                                                className="hover:text-foreground transition-colors p-1"
+                                                title="Copy"
+                                            >
+                                                <Copy size={16} />
+                                            </button>
+                                            <button className="hover:text-foreground transition-colors p-1">
+                                                <ThumbsUp size={16} />
+                                            </button>
+                                            <button className="hover:text-foreground transition-colors p-1">
+                                                <ThumbsDown size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    console.log("PDF Generation Triggered for Sora Response");
+                                                    const doc = new jsPDF();
+                                                    const pageWidth = doc.internal.pageSize.getWidth();
+                                                    const pageHeight = doc.internal.pageSize.getHeight();
+                                                    const margin = 15;
+                                                    const maxWidth = pageWidth - (margin * 2);
+                                                    
+                                                    doc.setFont("helvetica", "bold");
+                                                    doc.setFontSize(16);
+                                                    doc.text("SUPER AI - SORA EXPORT", margin, 20);
+                                                    
+                                                    doc.setFontSize(10);
+                                                    doc.setFont("helvetica", "normal");
+                                                    doc.text(`Model: ${selectedModel.name}`, margin, 28);
+                                                    doc.text(`Date: ${new Date().toLocaleString()}`, margin, 34);
+                                                    
+                                                    doc.setLineWidth(0.5);
+                                                    doc.line(margin, 38, pageWidth - margin, 38);
+                                                    
+                                                    doc.setFontSize(11);
+                                                    const lines = doc.splitTextToSize(msg.content, maxWidth);
+                                                    
+                                                    let cursorY = 48;
+                                                    lines.forEach((line: string) => {
+                                                        if (cursorY > pageHeight - 20) {
+                                                            doc.addPage();
+                                                            cursorY = 20;
+                                                        }
+                                                        doc.text(line, margin, cursorY);
+                                                        cursorY += 7;
+                                                    });
+                                                    
+                                                    doc.save(`sora-response-${Date.now()}.pdf`);
+                                                }}
+                                                className="hover:text-foreground transition-colors p-1"
+                                                title="Download PDF"
+                                            >
+                                                <Download size={16} />
+                                            </button>
                                         </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <div ref={endOfMessagesRef} />
+                </div>
+            </div>
+
+            {/* Input Section */}
+            <div className="absolute inset-x-0 bottom-0 pb-10 pt-16 bg-gradient-to-t from-background via-background/95 to-transparent w-full flex flex-col items-center justify-center px-6 z-30 pointer-events-none">
+                <div className="w-full max-w-4xl flex flex-col gap-4 pointer-events-auto relative">
+                    {/* Model Selector Dropdown - Re-styled for Pill Integration */}
+                    {isSelectorOpen && (
+                        <div 
+                            ref={selectorRef}
+                            className="absolute bottom-full left-0 mb-6 w-72 border border-panel-border rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] backdrop-blur-3xl bg-panel/80 overflow-hidden animate-in slide-in-from-bottom-4 duration-500 z-50 p-2 max-h-[400px] overflow-y-auto hide-scrollbar"
+                        >
+                            <div className="p-3 border-b border-panel-border mb-2">
+                                <p className="text-[10px] font-black text-foreground/40 uppercase tracking-widest">Select Model</p>
+                            </div>
+                            <div className="space-y-1">
+                                {availableChampions.map((champ) => (
+                                    <button
+                                        key={champ.id}
+                                        onClick={() => {
+                                            setSelectedModel(champ);
+                                            setIsSelectorOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${selectedModel.id === champ.id ? 'bg-foreground/10 border border-panel-border' : 'hover:bg-foreground/5 border border-transparent'}`}
+                                    >
+                                        <div className="w-8 h-8 rounded-xl p-1.5 bg-foreground/5 overflow-hidden">
+                                            <img src={champ.logo} alt="" className="w-full h-full object-contain" />
+                                        </div>
+                                        <span className="text-sm font-bold text-foreground/90">{champ.name}</span>
+                                    </button>
+                                ))}
+                                {availableChampions.length === 0 && (
+                                    <div className="p-4 text-center text-xs text-foreground/20 italic">
+                                        No models enabled in settings.
                                     </div>
                                 )}
                             </div>
-                        ))}
-                        <div ref={endOfMessagesRef} />
-                    </div>
-                )}
-            </div>
-
-            <div className="absolute inset-x-0 bottom-0 pb-6 pt-12 bg-gradient-to-t from-background via-background/95 to-transparent w-full flex flex-col items-center justify-center px-6 z-30 pointer-events-none">
-                <div className="w-full max-w-4xl flex flex-col gap-3 pointer-events-auto">
-                    {image && (
-                        <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-accent/40 shadow-xl group ml-4 animate-in slide-in-from-bottom-2">
-                            <img src={image} className="w-full h-full object-cover" alt="Pulse Preview" />
-                            <button onClick={() => setImage(null)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Plus className="rotate-45" size={14} />
-                            </button>
                         </div>
                     )}
-                    <div className={`w-full glass-panel shadow-2xl relative border ${isGlobalStreaming ? 'border-accent/40 shadow-accent/5' : 'border-panel-border focus-within:border-accent/40'} bg-background/40 backdrop-blur-3xl rounded-[2rem] p-3 pl-4 flex items-center gap-3 transition-all duration-500 group`}>
-                        <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="p-2 text-muted hover:text-accent transition-colors"
+
+                    {image && (
+                        <div className="relative w-28 h-28 rounded-3xl overflow-hidden border-2 border-accent/50 shadow-2xl group ml-6 animate-in zoom-in duration-300">
+                            <img src={image} className="w-full h-full object-cover" alt="Visual Context" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <button onClick={() => setImage(null)} className="bg-white/20 backdrop-blur-md text-white rounded-full p-2 hover:bg-white/30 transition-colors">
+                                    <Plus className="rotate-45" size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div className={`w-full relative flex items-center gap-3 px-6 py-2.5 rounded-[2rem] border border-panel-border bg-foreground/5 backdrop-blur-3xl transition-all duration-500 shadow-xl focus-within:border-accent/30`}>
+                        <button 
+                            onClick={() => setIsSelectorOpen(!isSelectorOpen)}
+                            className="flex-shrink-0 p-1 text-foreground/40 hover:text-foreground transition-all transform hover:rotate-90"
                         >
-                            <ImageIcon size={22} />
+                            <Plus className="w-5 h-5" />
                         </button>
-                        <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = () => setImage(reader.result as string);
-                                reader.readAsDataURL(file);
-                            }
-                        }} />
+
                         <input
                             type="text"
                             value={prompt}
@@ -356,18 +363,23 @@ export default function SoraMode() {
                                 if (e.key === 'Enter') handleSend();
                             }}
                             disabled={isGlobalStreaming}
-                            placeholder={isGlobalStreaming ? "Sorting Neural Pathways..." : "Prompt Sora Engine..."}
-                            className="flex-1 bg-transparent text-foreground placeholder-muted outline-none text-base font-bold py-3 disabled:opacity-50"
+                            placeholder={isGlobalStreaming ? "Processing..." : `Ask me anything...`}
+                            className="flex-1 bg-transparent text-foreground placeholder-foreground/20 outline-none focus:ring-0 border-none text-[15px] py-1 font-normal shadow-none"
                         />
+                        
+                        <button className="flex-shrink-0 p-1 text-foreground/40 hover:text-foreground transition-all">
+                            <Mic className="w-5 h-5" />
+                        </button>
+
                         <button
                             onClick={handleSend}
                             disabled={!prompt.trim() || isGlobalStreaming}
-                            className={`p-4 rounded-2xl transition-all duration-300 flex items-center justify-center ${prompt.trim() && !isGlobalStreaming ? 'bg-accent text-white shadow-xl shadow-accent/20 scale-105' : 'bg-muted/10 text-muted opacity-50'}`}
+                            className={`flex-shrink-0 w-8 h-8 flex items-center justify-center transition-all ${prompt.trim() && !isGlobalStreaming ? 'text-foreground' : 'text-foreground/20'}`}
                         >
                             {isGlobalStreaming ? (
-                                <Loader2 size={24} className="animate-spin" />
+                                <Loader2 size={18} className="animate-spin text-accent" />
                             ) : (
-                                <Send size={24} />
+                                <Send size={18} className="transform hover:scale-110 active:scale-95" />
                             )}
                         </button>
                     </div>
