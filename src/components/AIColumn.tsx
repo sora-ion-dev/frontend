@@ -4,7 +4,7 @@ import { AIBrand, AIModel, ChatMessage } from "@/types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus, prism } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { vscDarkPlus, prism, atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useTheme } from "./ThemeProvider";
 import { jsPDF } from "jspdf";
 
