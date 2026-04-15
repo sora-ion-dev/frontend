@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Fiesta AI | The Ultimate Neural Dashboard",
     description: "Battle and Evaluate 31+ flagship AI models side-by-side. Forever free and account-less.",
-    url: "https://sora-ion-ai.netlify.app",
+    url: "https://super-in-ai.vercel.app",
     siteName: "Fiesta AI",
     images: [
       {

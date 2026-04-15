@@ -517,7 +517,7 @@ export default function LandingPage() {
             </p>
             <div className="pt-12">
               <Link
-                href="https://sora-ion.netlify.app"
+                href="https://super-in-ai.vercel.app"
                 target="_blank"
                 className="inline-flex items-center gap-8 px-20 py-8 rounded-[3.5rem] bg-white text-black font-black text-[18px] uppercase tracking-widest hover:scale-110 hover:shadow-[0_0_100px_rgba(123,97,255,0.4)] transition-all active:scale-95 shadow-2xl"
               >
