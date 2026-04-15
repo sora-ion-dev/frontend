@@ -37,9 +37,9 @@ export const FIESTA_BRAND_IDS = [
     "arcee/trinity-large",
     "minimax/minimax-m2.5",
     "liquid/lfm-2.5",
-    "nvidia/falcon3-7b",
+    "nvidia/glm4-7",
     "nvidia/deepseek-v32",
-    "xai/grok-3-mini"
+    "xai/mistral-small"
 ];
 
 export const IMAGE_FIESTA_BRAND_IDS = [
@@ -60,9 +60,9 @@ export const MODEL_BRANDS: AIBrand[] = [
     { id: "arcee/trinity-large", brandId: "arcee/trinity-large", name: "Trinity Large", brandName: "Trinity Large", brand: "Arcee AI", realBrandName: "Arcee", logo: "/logos/trinity_large.svg", color: "#FF8A65", description: "High-performance Trinity model", models: [{ id: "arcee/trinity-large", name: "Trinity Large" }] },
     { id: "minimax/minimax-m2.5", brandId: "minimax/minimax-m2.5", name: "Minimax M2.5", brandName: "Minimax M2.5", brand: "Minimax", realBrandName: "Minimax", logo: "/logos/minimax.svg", color: "#45B7D1", description: "Minimax M2.5 efficiency", models: [{ id: "minimax/minimax-m2.5", name: "Minimax M2.5" }] },
     { id: "liquid/lfm-2.5", brandId: "liquid/lfm-2.5", name: "Liquid LFM", brandName: "Liquid LFM", brand: "Liquid AI", realBrandName: "Liquid", logo: "/logos/liquid.svg", color: "#95A5A6", description: "Liquid LFM performance", models: [{ id: "liquid/lfm-2.5", name: "Liquid LFM" }] },
-    { id: "nvidia/falcon3-7b", brandId: "nvidia/falcon3-7b", name: "Falcon 3-7B", brandName: "Falcon 3-7B", brand: "TII", realBrandName: "TII", logo: "/logos/falcon.svg", color: "#F39C12", description: "Falcon 3 reasoning master", models: [{ id: "nvidia/falcon3-7b", name: "Falcon 3-7B" }] },
+    { id: "nvidia/glm4-7", brandId: "nvidia/glm4-7", name: "GLM 4.7 Reasoning", brandName: "GLM 4.7 Reasoning", brand: "Z-AI", realBrandName: "Z-AI", logo: "/logos/glm.svg", color: "#F39C12", description: "GLM 4.7 reasoning with thinking tokens", models: [{ id: "nvidia/glm4-7", name: "GLM 4.7 Reasoning" }] },
     { id: "nvidia/deepseek-v32", brandId: "nvidia/deepseek-v32", name: "DeepSeek V3.2", brandName: "DeepSeek V3.2", brand: "DeepSeek", realBrandName: "DeepSeek", logo: "/logos/deepseek_chat.svg", color: "#00E0FF", description: "State-of-the-art reasoning LLM", models: [{ id: "nvidia/deepseek-v32", name: "DeepSeek V3.2" }] },
-    { id: "xai/grok-3-mini", brandId: "xai/grok-3-mini", name: "Grok-3 Mini", brandName: "Grok-3 Mini", brand: "xAI", realBrandName: "xAI", logo: "/logos/xai.svg", color: "#E0E0E0", description: "Efficient and sharp intelligence from xAI", models: [{ id: "xai/grok-3-mini", name: "Grok-3 Mini" }] },
+    { id: "xai/mistral-small", brandId: "xai/mistral-small", name: "Mistral Small v3", brandName: "Mistral Small v3", brand: "Mistral", realBrandName: "Mistral", logo: "/logos/mistral.svg", color: "#E0E0E0", description: "Mistral Small performance from GitHub", models: [{ id: "xai/mistral-small", name: "Mistral Small v3" }] },
     // Image Fiesta Models (Consolidated 4)
     { id: "black-forest-labs/FLUX.1-schnell", brandId: "black-forest-labs/FLUX.1-schnell", name: "FLUX.1-schnell", brandName: "FLUX.1-schnell", brand: "BFL", realBrandName: "Black Forest Labs", logo: "/logos/bfl.svg", color: "#F39C12", description: "Top-tier realistic image generation", models: [{ id: "black-forest-labs/FLUX.1-schnell", name: "FLUX.1-schnell" }] },
     { id: "Qwen/Qwen-Image", brandId: "Qwen/Qwen-Image", name: "Qwen-Image", brandName: "Qwen-Image", brand: "Qwen", realBrandName: "Qwen", logo: "/logos/qwen.svg", color: "#A855F7", description: "Alibaba's visual foundational model", models: [{ id: "Qwen/Qwen-Image", name: "Qwen-Image" }] },

@@ -103,42 +103,92 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                         msg.content
                                     ) : (
                                         <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-foreground/5 prose-pre:border prose-pre:border-panel-border`}>
-                                            <ReactMarkdown
-                                                remarkPlugins={[remarkGfm]}
-                                                components={{
-                                                    code({ node, inline, className, children, ...props }: any) {
-                                                        const match = /language-(\w+)/.exec(className || "");
-                                                        return !inline && match ? (
-                                                            <div className="rounded-2xl overflow-hidden border border-panel-border my-4 shadow-2xl">
-                                                                <div className="bg-foreground/5 px-4 py-1.5 flex justify-between items-center">
-                                                                    <span className="text-[10px] font-black tracking-widest text-[#10b981]">{match[1]}</span>
-                                                                    <button 
-                                                                        onClick={() => navigator.clipboard.writeText(String(children))}
-                                                                        className="text-foreground/20 hover:text-foreground"
+                                                {msg.content.includes("<thought>") ? (
+                                                  <div className="space-y-4">
+                                                    <div className="bg-foreground/5 border-l-4 border-purple-500/50 rounded-r-2xl p-4 mb-4">
+                                                      <div className="flex items-center gap-2 mb-2 text-purple-400 text-[10px] font-black uppercase tracking-widest">
+                                                        <Brain size={14} />
+                                                        Thinking Process
+                                                      </div>
+                                                      <div className="text-[14px] text-foreground/50 font-medium italic leading-relaxed">
+                                                        {msg.content.match(/<thought>([\s\S]*?)<\/thought>/)?.[1] || "Reasoning..."}
+                                                      </div>
+                                                    </div>
+                                                    <ReactMarkdown 
+                                                      remarkPlugins={[remarkGfm]}
+                                                      components={{
+                                                        code({ node, inline, className, children, ...props }: any) {
+                                                            const match = /language-(\w+)/.exec(className || "");
+                                                            return !inline && match ? (
+                                                                <div className="rounded-2xl overflow-hidden border border-panel-border my-4 shadow-2xl">
+                                                                    <div className="bg-foreground/5 px-4 py-1.5 flex justify-between items-center">
+                                                                        <span className="text-[10px] font-black tracking-widest text-[#10b981]">{match[1]}</span>
+                                                                        <button 
+                                                                            onClick={() => navigator.clipboard.writeText(String(children))}
+                                                                            className="text-foreground/20 hover:text-foreground"
+                                                                        >
+                                                                            <Copy size={12} />
+                                                                        </button>
+                                                                    </div>
+                                                                    <SyntaxHighlighter
+                                                                        style={theme === 'dark' ? vscDarkPlus : prism}
+                                                                        language={match[1]}
+                                                                        PreTag="div"
+                                                                        customStyle={{ margin: 0, padding: '1.5rem', fontSize: '0.85rem', background: 'transparent' }}
+                                                                        {...props}
                                                                     >
-                                                                        <Copy size={12} />
-                                                                    </button>
+                                                                        {String(children).replace(/\n$/, "")}
+                                                                    </SyntaxHighlighter>
                                                                 </div>
-                                                                <SyntaxHighlighter
-                                                                    style={theme === 'dark' ? vscDarkPlus : prism}
-                                                                    language={match[1]}
-                                                                    PreTag="div"
-                                                                    customStyle={{ margin: 0, padding: '1.5rem', fontSize: '0.85rem', background: 'transparent' }}
-                                                                    {...props}
-                                                                >
-                                                                    {String(children).replace(/\n$/, "")}
-                                                                </SyntaxHighlighter>
-                                                            </div>
-                                                        ) : (
-                                                            <code className={`${className} bg-foreground/10 px-1.5 py-0.5 rounded-md font-bold text-foreground`} {...props}>
-                                                                {children}
-                                                            </code>
-                                                        );
-                                                    }
-                                                }}
-                                            >
-                                                {msg.content}
-                                            </ReactMarkdown>
+                                                            ) : (
+                                                                <code className={`${className} bg-foreground/10 px-1.5 py-0.5 rounded-md font-bold text-foreground`} {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            );
+                                                        }
+                                                      }}
+                                                    >
+                                                      {msg.content.replace(/<thought>[\s\S]*?<\/thought>/, "").trim()}
+                                                    </ReactMarkdown>
+                                                  </div>
+                                                ) : (
+                                                  <ReactMarkdown 
+                                                    remarkPlugins={[remarkGfm]}
+                                                    components={{
+                                                        code({ node, inline, className, children, ...props }: any) {
+                                                            const match = /language-(\w+)/.exec(className || "");
+                                                            return !inline && match ? (
+                                                                <div className="rounded-2xl overflow-hidden border border-panel-border my-4 shadow-2xl">
+                                                                    <div className="bg-foreground/5 px-4 py-1.5 flex justify-between items-center">
+                                                                        <span className="text-[10px] font-black tracking-widest text-[#10b981]">{match[1]}</span>
+                                                                        <button 
+                                                                            onClick={() => navigator.clipboard.writeText(String(children))}
+                                                                            className="text-foreground/20 hover:text-foreground"
+                                                                        >
+                                                                            <Copy size={12} />
+                                                                        </button>
+                                                                    </div>
+                                                                    <SyntaxHighlighter
+                                                                        style={theme === 'dark' ? vscDarkPlus : prism}
+                                                                        language={match[1]}
+                                                                        PreTag="div"
+                                                                        customStyle={{ margin: 0, padding: '1.5rem', fontSize: '0.85rem', background: 'transparent' }}
+                                                                        {...props}
+                                                                    >
+                                                                        {String(children).replace(/\n$/, "")}
+                                                                    </SyntaxHighlighter>
+                                                                </div>
+                                                            ) : (
+                                                                <code className={`${className} bg-foreground/10 px-1.5 py-0.5 rounded-md font-bold text-foreground`} {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            );
+                                                        }
+                                                    }}
+                                                  >
+                                                    {msg.content}
+                                                  </ReactMarkdown>
+                                                )}
                                         </div>
                                     )}
                                     {msg.isStreaming && <span className="inline-block w-2 h-5 ml-2 bg-accent animate-pulse align-middle rounded-full"></span>}

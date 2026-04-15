@@ -116,12 +116,11 @@ function NeuralEnginePreview() {
 }
 
 const ALL_MODELS = [
-  { name: "GPT-4o", logo: "/logos/gpt4o_pro.svg" },
-  { name: "Claude 3.5 Sonnet", logo: "/logos/claude.png" },
+  { name: "GLM 4.7 Reasoning", logo: "/logos/glm.svg" },
+  { name: "Mistral Small v3", logo: "/logos/mistral.svg" },
   { name: "Gemini 1.5 Pro", logo: "/logos/gemini_flash.svg" },
   { name: "DeepSeek V3", logo: "/logos/deepseek_chat.svg" },
   { name: "Llama 3.3", logo: "/logos/llama33.svg" },
-  { name: "Grok-3", logo: "/logos/xai.svg" },
   { name: "o1-Preview", logo: "/logos/gpt4o_pro.svg" },
   { name: "Flux.1", logo: "/logos/bfl.svg" },
   { name: "Hunyuan 3.0", logo: "/logos/hunyuan.png" },
