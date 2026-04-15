@@ -116,8 +116,11 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                                         <ChevronDown size={14} className="text-foreground/20 group-open:rotate-180 transition-transform duration-300" />
                                                       </summary>
                                                       <div className="px-6 pb-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                        <div className="text-[14px] text-foreground/40 font-medium italic leading-relaxed pl-5 border-l-2 border-purple-500/20">
-                                                          {msg.content.match(/<thought>([\s\S]*?)<\/thought>/)?.[1] || "Deep reasoning analysis..."}
+                                                        <div className="text-[14px] text-foreground/40 font-medium italic leading-relaxed pl-5 border-l-2 border-purple-500/20 whitespace-pre-wrap">
+                                                          {(() => {
+                                                            const matches = Array.from(msg.content.matchAll(/<thought>([\s\S]*?)(?:<\/thought>|$)/g));
+                                                            return matches.map(m => m[1]).join("").trim() || "Deep reasoning analysis...";
+                                                          })()}
                                                         </div>
                                                       </div>
                                                     </details>
@@ -138,24 +141,22 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                                                         </button>
                                                                     </div>
                                                                     <SyntaxHighlighter
-                                                                        style={theme === 'dark' ? vscDarkPlus : prism}
                                                                         language={match[1]}
-                                                                        PreTag="div"
-                                                                        customStyle={{ margin: 0, padding: '1.5rem', fontSize: '0.85rem', background: 'transparent' }}
-                                                                        {...props}
+                                                                        style={atomDark}
+                                                                        customStyle={{ margin: 0, padding: '1.5rem', background: 'transparent' }}
                                                                     >
                                                                         {String(children).replace(/\n$/, "")}
                                                                     </SyntaxHighlighter>
                                                                 </div>
                                                             ) : (
-                                                                <code className={`${className} bg-foreground/10 px-1.5 py-0.5 rounded-md font-bold text-foreground`} {...props}>
+                                                                <code className={className} {...props}>
                                                                     {children}
                                                                 </code>
                                                             );
                                                         }
                                                       }}
                                                     >
-                                                      {msg.content.replace(/<thought>[\s\S]*?<\/thought>/, "").trim()}
+                                                        {msg.content.replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, "").trim()}
                                                     </ReactMarkdown>
                                                   </div>
                                                 ) : (

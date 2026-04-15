@@ -8,9 +8,9 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sora-ion-ai.netlify.app"), // Updated candidate for Netlify
-  title: "Fiesta AI | Unified Neural Orchestration & Model Comparison",
-  description: "Experience absolute intelligence. Compare and battle GPT-4o, Claude 3.5, Gemini 1.5, and DeepSeek in real-time. Unified high-fidelity model routing and vision eval.",
+  metadataBase: new URL("https://super-in-ai.vercel.app"),
+  title: "SUPER AI | Unified Neural Orchestration & Model Comparison",
+  description: "Experience absolute intelligence with SUPER AI. Compare and battle GPT-4o, Claude 3.5, Gemini 1.5, and DeepSeek in real-time. Unified high-fidelity model routing and vision eval.",
   keywords: [
     "Fiesta AI",
     "Model Battle",
@@ -23,12 +23,17 @@ export const metadata: Metadata = {
     "Best AI Models 2026"
   ],
   verification: {
-    google: "vi6sMrNbzQC1osOVH2v4haUq3o8O2J0eAIJq_b7HJN8",
+    google: "f3O1uwSU8TeKQELzrxTOGy6bvrvduGNqRHqGTe3D0Nc",
   },
   manifest: "/manifest.json",
   icons: {
-    icon: "/logos/logo.png",
+    icon: [
+      { url: "/logos/logo.png" },
+      { url: "/logos/logo.png", sizes: "32x32" },
+      { url: "/logos/logo.png", sizes: "16x16" },
+    ],
     apple: "/logos/logo.png",
+    shortcut: "/logos/logo.png",
   },
   openGraph: {
     title: "Fiesta AI | The Ultimate Neural Dashboard",
@@ -60,6 +65,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script id="structured-data" type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "SUPER AI",
+            "url": "https://super-in-ai.vercel.app",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://super-in-ai.vercel.app/search?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </Script>
+      </head>
       <body className={outfit.className} suppressHydrationWarning>
         <ThemeProvider>
           {children}

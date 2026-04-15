@@ -608,9 +608,10 @@ export default function Home() {
           </button>
 
           <button
+            onClick={() => window.location.href = '/admin'}
             className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all"
           >
-            <Shield size={18} />
+            <Shield size={18} className="text-indigo-400" />
             Admin Panel
           </button>
 
