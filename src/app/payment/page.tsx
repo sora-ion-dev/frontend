@@ -12,9 +12,7 @@ export default function PaymentPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
-    if (status === "unauthenticated") {
-        return <div className="min-h-screen bg-black text-white flex items-center justify-center">Please log in to continue.</div>;
-    }
+    // Public access check - always true for now
 
     const handleSubmit = async () => {
         if (!txnId.trim()) return;
