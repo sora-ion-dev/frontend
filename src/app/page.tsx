@@ -817,9 +817,4 @@ export default function Home() {
     </div>
   );
 
-  if (isAuthorized === null) {
-    return <AccessGate onAuthorized={handleAuthorized} />;
-  }
-
-  return MainAppContent;
 }
