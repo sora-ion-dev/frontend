@@ -34,13 +34,13 @@ const getBackendUrl = () => {
     
     // Detection for local development
     if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {
-      // Logic for local testing: backend is usually on 7860 (Hugging Face setup)
-      return `${protocol}//${hostname}:7860`; 
+      // Logic for local testing: backend is on 8000
+      return `${protocol}//${hostname}:8000`; 
     }
   }
 
   // Final fallback (Local dev default)
-  return "http://localhost:7860";
+  return "http://localhost:8000";
 };
 
 export const BACKEND_URL = getBackendUrl();

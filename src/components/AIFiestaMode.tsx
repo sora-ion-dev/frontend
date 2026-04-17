@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Trophy, Send, RotateCcw, Brain, Zap, Swords, Merge, Loader2, Plus, Mic, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Trophy, Send, RotateCcw, Brain, Zap, Swords, Merge, Loader2, Plus, Mic, Image as ImageIcon, Lock as LockIcon } from "lucide-react";
 import { AIBrand, ChatMessage } from "@/types";
 import { MODEL_BRANDS, FIESTA_BRAND_IDS } from "@/types";
 import AIColumn from "./AIColumn";
@@ -19,7 +19,7 @@ interface AIFiestaModeProps {
     onClearColumn: (brandId: string) => void;
     enabledModels: Record<string, boolean>;
     onToggleEnabled: (brandId: string) => void;
-    // Removed tier props as per 31-model architecture
+    isAuthorized: boolean;
 }
 
 export default function AIFiestaMode({
@@ -35,10 +35,41 @@ export default function AIFiestaMode({
     onClearColumn,
     enabledModels,
     onToggleEnabled,
+    isAuthorized,
 }: AIFiestaModeProps) {
     const [prompt, setPrompt] = useState("");
     const [hasStarted, setHasStarted] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [orderedBrandIds, setOrderedBrandIds] = useState<string[]>(FIESTA_BRAND_IDS);
+    const prevStreaming = useRef(isStreaming);
+
+    useEffect(() => {
+        if (prevStreaming.current && !isStreaming) {
+            // Streaming just finished
+            setOrderedBrandIds(prev => {
+                const next = [...prev];
+                const failedIds: string[] = [];
+                const successIds: string[] = [];
+
+                next.forEach(id => {
+                    const msgs = columnMessages[id] || [];
+                    const lastMsg = msgs[msgs.length - 1];
+                    const isError = lastMsg && (
+                        lastMsg.content.includes("Error from") || 
+                        lastMsg.content.includes("Connection error") ||
+                        lastMsg.content.trim() === ""
+                    );
+                    
+                    if (isError) failedIds.push(id);
+                    else successIds.push(id);
+                });
+                
+                return [...successIds, ...failedIds];
+            });
+        }
+        prevStreaming.current = isStreaming;
+    }, [isStreaming, columnMessages]);
+
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const handleSend = () => {
@@ -57,7 +88,7 @@ export default function AIFiestaMode({
         // I will remove it to ensure vertical scrolling works inside columns as expected.
     };
 
-    const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
+    const fiestaBrands = orderedBrandIds.map(id => MODEL_BRANDS.find(b => b.brandId === id)).filter(Boolean) as AIBrand[];
 
     return (
         <div className="h-full relative overflow-hidden font-sans bg-background group">
@@ -69,22 +100,36 @@ export default function AIFiestaMode({
                 style={{ scrollSnapType: "x mandatory" }}
             >
                 <div className="flex flex-row gap-4 min-w-max h-full">
-                    {fiestaBrands.filter(b => enabledModels[b.brandId]).map((brand, bIndex) => (
-                        <div key={brand.brandId} className="w-[85vw] md:w-[400px] flex-shrink-0 h-full scroll-snap-align-start transition-all duration-500 opacity-100 scale-100">
-                            <AIColumn
-                                brand={brand}
-                                messages={columnMessages[brand.brandId] || []}
-                                selectedModelId={selectedModels[brand.brandId]}
-                                onModelChange={(mid) => onModelChange(brand.brandId, mid)}
-                                onRegenerate={(mid) => onRegenerate(brand.brandId, mid)}
-                                isStreaming={isStreaming}
-                                rank={null}
-                                onClearColumn={() => onClearColumn(brand.brandId)}
-                                isEnabled={enabledModels[brand.brandId]}
-                                onToggleEnabled={() => onToggleEnabled(brand.brandId)}
-                            />
-                        </div>
-                    ))}
+                    {fiestaBrands.filter(b => enabledModels[b.brandId]).map((brand, bIndex) => {
+                        const isLocked = !isAuthorized && bIndex >= 3;
+                        return (
+                            <div key={brand.brandId} className={`w-[85vw] md:w-[400px] flex-shrink-0 h-full scroll-snap-align-start transition-all duration-500 ${isLocked ? 'opacity-40 grayscale pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+                                <div className="relative h-full">
+                                    {isLocked && (
+                                        <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center p-8 text-center bg-background/20 backdrop-blur-sm rounded-[2.5rem]">
+                                            <div className="p-4 rounded-2xl bg-panel border border-panel-border shadow-2xl mb-4">
+                                                <LockIcon className="w-8 h-8 text-foreground/40" />
+                                            </div>
+                                            <h4 className="text-sm font-black uppercase tracking-widest text-foreground/60 mb-1">Neural Gate Locked</h4>
+                                            <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-tighter">Enter Access Key for Pro Multi-Comparison</p>
+                                        </div>
+                                    )}
+                                    <AIColumn
+                                        brand={brand}
+                                        messages={columnMessages[brand.brandId] || []}
+                                        selectedModelId={selectedModels[brand.brandId]}
+                                        onModelChange={(mid) => onModelChange(brand.brandId, mid)}
+                                        onRegenerate={(mid) => onRegenerate(brand.brandId, mid)}
+                                        isStreaming={isStreaming}
+                                        rank={null}
+                                        onClearColumn={() => onClearColumn(brand.brandId)}
+                                        isEnabled={enabledModels[brand.brandId]}
+                                        onToggleEnabled={() => onToggleEnabled(brand.brandId)}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
                         {/* Status Indicator */}
                         {/* Status Indicator */}
                         {isStreaming && (

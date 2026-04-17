@@ -1,617 +1,825 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { motion, AnimatePresence, Variants } from "framer-motion";
-import { 
-  Sparkles, ChevronDown, Zap, Cpu, Command, Network, 
-  Shield, Globe, ArrowRight, Instagram, Linkedin, Github, Twitter, 
-  Layers, Database, Activity, Terminal, CheckCircle2, Search,
-  Eye, Code, PenTool, BarChart3, Radio, HardDrive
-} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain, Zap, Send, Image as ImageIcon, Plus, Lock as LockIcon } from "lucide-react";
+import { AIBrand, ChatMessage, MODEL_BRANDS, FIESTA_BRAND_IDS } from "@/types";
+import { BACKEND_URL } from "@/lib/config";
+import AIColumn from "@/components/AIColumn";
+import SoraMode from "@/components/SoraMode";
+import PromptMode from "@/components/PromptMode";
+import PlaySora from "@/components/PlaySora";
+import AIFiestaMode from "@/components/AIFiestaMode";
+import SettingsModal from "@/components/SettingsModal";
+import ImageFiestaMode from "@/components/ImageFiestaMode";
+import SuperSearchMode from "@/components/SuperSearchMode";
+import { IMAGE_FIESTA_BRAND_IDS } from "@/types";
+import AccessGate from "@/components/AccessGate";
 
-// --- ANIMATION VARIANTS ---
+const AUTHORIZATION_KEY = "2103";
+const FREE_MESSAGE_LIMIT = 5;
 
-const FADE_UP: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] }
-  }
-};
-
-const STAGGER_CONTAINER: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.2 }
-  }
-};
-
-// --- COMPONENTS ---
-
-function FAQItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <motion.div
-      variants={FADE_UP}
-      className={`group border rounded-[2rem] overflow-hidden transition-all duration-500 cursor-pointer
-        ${open ? "border-purple-500/30 bg-purple-500/5 shadow-[0_20px_40px_rgba(123,97,255,0.05)]" : "border-white/5 bg-white/[0.01] hover:border-white/10"}`}
-      onClick={() => setOpen(!open)}
-    >
-      <div className="flex items-center justify-between p-8 gap-4">
-        <span className="text-[18px] font-semibold text-white/70 group-hover:text-white transition-colors tracking-tight">{q}</span>
-        <div className={`p-2 rounded-xl bg-white/5 transition-transform duration-500 ${open ? "rotate-180 bg-purple-500/20 text-purple-400" : ""}`}>
-          <ChevronDown size={18} />
-        </div>
-      </div>
-      <AnimatePresence>
-        {open && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="overflow-hidden"
-          >
-            <div className="px-8 pb-8 text-[15px] text-white/30 leading-relaxed border-t border-white/5 pt-6 uppercase">
-              {a}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-function NeuralEnginePreview() {
-  const [activeStep, setActiveStep] = useState(0);
+export default function Home() {
+  const session = { user: { email: "public-user", name: "Guest" } }; // Dummy session for public access
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  useEffect(() => {
+    if (window.innerWidth < 768) setSidebarOpen(false);
+  }, []);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [prompt, setPrompt] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [rankings, setRankings] = useState<string[]>([]);
+  const [personality, setPersonality] = useState("Professional");
+  const [webSearch, setWebSearch] = useState(false);
+  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "play_sora" | "image_fiesta" | "super_search">("superfiesta");
   
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % 4);
-    }, 2500);
-    return () => clearInterval(timer);
-  }, []);
-
-  const steps = [
-    { label: "Semantic Parsing", icon: <Search size={14} />, detail: "Analyzing intent vectors..." },
-    { label: "Kernel Swap", icon: <Cpu size={14} />, detail: "Selecting optimal node..." },
-    { label: "Evaluation", icon: <Activity size={14} />, detail: "Verifying logic integrity..." },
-    { label: "Final Stream", icon: <CheckCircle2 size={14} />, detail: "Pushing to user edge." }
-  ];
-
-  return (
-    <div className="w-full max-w-lg mx-auto rounded-[3rem] border border-white/10 bg-[#050505] p-10 shadow-2xl relative overflow-hidden group">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
-      <div className="flex items-center justify-between mb-10 opacity-40">
-        <div className="flex gap-1.5 text-purple-500">
-          <Terminal size={14} />
-          <div className="text-[10px] font-black tracking-widest uppercase">System Control v6.0</div>
-        </div>
-        <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping" />
-      </div>
-      
-      <div className="space-y-5">
-        {steps.map((step, idx) => (
-          <motion.div 
-            key={idx}
-            animate={{ opacity: activeStep === idx ? 1 : 0.25, x: activeStep === idx ? 12 : 0 }}
-            className={`flex items-center gap-5 p-5 rounded-2xl border ${activeStep === idx ? "border-purple-500/30 bg-purple-500/5 shadow-inner" : "border-white/5 bg-transparent"}`}
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${activeStep === idx ? "bg-purple-600 text-white shadow-lg" : "bg-white/5 text-white/20"}`}>
-              {step.icon}
-            </div>
-            <div className="flex-1">
-              <div className="text-[14px] font-bold tracking-wide uppercase">{step.label}</div>
-              <div className="text-[11px] text-white/20 font-medium uppercase mt-1">{step.detail}</div>
-            </div>
-            {activeStep === idx && <motion.div layoutId="active" className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_15px_rgba(123,97,255,0.8)]" />}
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const ALL_MODELS = [
-  { name: "GLM 4.7 Reasoning", logo: "/logos/glm.svg" },
-  { name: "Mistral Small v3", logo: "/logos/mistral.svg" },
-  { name: "Gemini 1.5 Pro", logo: "/logos/gemini_flash.svg" },
-  { name: "DeepSeek V3", logo: "/logos/deepseek_chat.svg" },
-  { name: "Llama 3.3", logo: "/logos/llama33.svg" },
-  { name: "o1-Preview", logo: "/logos/gpt4o_pro.svg" },
-  { name: "Flux.1", logo: "/logos/bfl.svg" },
-  { name: "Hunyuan 3.0", logo: "/logos/hunyuan.png" },
-  { name: "SDXL Lightning", logo: "/logos/bytedance.svg" },
-  { name: "Mistral Large", logo: "/logos/mistral.png" },
-  { name: "Qwen 2.5", logo: "/logos/qwen.svg" },
-  { name: "Perplexity Online", logo: "/logos/perplexity.png" },
-  { name: "Command R+", logo: "/logos/cohere.png" },
-  { name: "Stable Diffusion 3", logo: "/logos/sd3.png" },
-  { name: "Gemini Flash", logo: "/logos/gemini_flash.svg" },
-  { name: "Claude Opus", logo: "/logos/claude.png" },
-  { name: "GPT-3.5 Turbo", logo: "/logos/gpt4o_pro.svg" },
-  { name: "Nova One", logo: "/logos/nova.png" }
-];
-
-const FEATURES = [
-  {
-    icon: <Network size={22} className="text-purple-400" />,
-    title: "Neural Synergy",
-    desc: "Autonomous fusion of 31+ flagship nodes into one stream.",
-    grid: "col-span-1 md:col-span-6 lg:col-span-7",
-    glow: "bg-purple-600/10"
-  },
-  {
-    icon: <Eye size={22} className="text-blue-400" />,
-    title: "Vision Eval",
-    desc: "Advanced multimodal analysis across global vision kernels.",
-    grid: "col-span-1 md:col-span-6 lg:col-span-5",
-    glow: "bg-blue-600/10"
-  },
-  {
-    icon: <Code size={22} className="text-emerald-400" />,
-    title: "Logic Studio",
-    desc: "Deep comparative coding and architectural battle testing.",
-    grid: "col-span-1 md:col-span-6 lg:col-span-5",
-    glow: "bg-emerald-600/10"
-  },
-  {
-    icon: <PenTool size={22} className="text-indigo-400" />,
-    title: "Artisan Image",
-    desc: "Sub-5 second generation with ByteDance & Tencent latency.",
-    grid: "col-span-1 md:col-span-6 lg:col-span-7",
-    glow: "bg-indigo-600/10"
-  },
-  {
-    icon: <BarChart3 size={22} className="text-amber-400" />,
-    title: "IQ Benchmarking",
-    desc: "Real-time accuracy scoring for every single model hit.",
-    grid: "col-span-1 md:col-span-6 lg:col-span-6",
-    glow: "bg-amber-600/10"
-  },
-  {
-    icon: <Shield size={22} className="text-white" />,
-    title: "Isolation Mode",
-    desc: "Ephemeral session security for professional scale query.",
-    grid: "col-span-1 md:col-span-6 lg:col-span-6",
-    glow: "bg-white/5"
-  }
-];
-
-const FAQS = [
-  {
-    q: "How does the Neural Orchestrator work?",
-    a: "It visualizes the meta-reasoning process of 31 AI models, allowing you to selectively weight and compare inputs in real-time.",
-  },
-  {
-    q: "Is it really 100% account-free?",
-    a: "Correct. We value the friction-less exchange of intelligence. Land, prompt, and receive—no logins required for standard access.",
-  },
-  {
-    q: "Can I use it for commercial production?",
-    a: "Yes. Fiesta AI is built for professional pipelines, offering the highest model concurrency available for verification and creative drafting.",
-  },
-  {
-    q: "Which models power the image mode?",
-    a: "We integrate direct fast-inference nodes for FLUX.1, SDXL Lightning, and Hunyuan 3.0, ensuring sub-5-second generation speeds.",
-  }
-];
-
-// --- MAIN PAGE ---
-
-export default function LandingPage() {
-  const [scrolled, setScrolled] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(true);
+  const [messageCount, setMessageCount] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 30);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const auth = localStorage.getItem("superai_authorized");
+    const count = parseInt(localStorage.getItem("superai_msg_count") || "0");
+    const lastDate = localStorage.getItem("superai_last_msg_date");
+    const today = new Date().toLocaleDateString();
+
+    if (auth === "true") setIsAuthorized(true);
+    else if (auth === "false") setIsAuthorized(false);
+
+    if (lastDate !== today) {
+      localStorage.setItem("superai_last_msg_date", today);
+      localStorage.setItem("superai_msg_count", "0");
+      setMessageCount(0);
+    } else {
+      setMessageCount(count);
+    }
   }, []);
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const handleAuthorized = () => {
+    const auth = localStorage.getItem("superai_authorized") === "true";
+    setIsAuthorized(auth);
   };
 
-  return (
-    <div className="min-h-screen bg-[#000000] text-white selection:bg-purple-500/30 overflow-x-hidden font-sans antialiased uppercase tracking-tight">
+  const incrementMessageCount = () => {
+    if (isAuthorized) return;
+    const newCount = messageCount + 1;
+    setMessageCount(newCount);
+    localStorage.setItem("superai_msg_count", newCount.toString());
+  };
+
+  useEffect(() => {
+    const loadSettings = () => {
+      const savedPersona = localStorage.getItem("superai_persona");
+      const savedWebSearch = localStorage.getItem("superai_websearch") === "true";
+      if (savedPersona) setPersonality(savedPersona);
+      setWebSearch(savedWebSearch);
+    };
+
+    loadSettings();
+    window.addEventListener("storage", loadSettings);
+    window.addEventListener("settingsChanged", loadSettings);
+
+    return () => {
+      window.removeEventListener("storage", loadSettings);
+      window.removeEventListener("settingsChanged", loadSettings);
+    };
+  }, []);
+  const [fiestaHistory, setFiestaHistory] = useState<{ id: string, prompt: string, timestamp: number }[]>([]);
+
+  const [enabledModels, setEnabledModels] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const syncEnabledModels = () => {
+      const saved = localStorage.getItem("superai_enabled_models");
+      if (saved) {
+        setEnabledModels(JSON.parse(saved));
+      } else {
+        const initial: Record<string, boolean> = {};
+        MODEL_BRANDS.forEach(brand => (initial[brand.id] = true));
+        setEnabledModels(initial);
+      }
+    };
+    syncEnabledModels();
+    window.addEventListener("settingsChanged", syncEnabledModels);
+    return () => window.removeEventListener("settingsChanged", syncEnabledModels);
+  }, []);
+
+  const [selectedModels, setSelectedModels] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    MODEL_BRANDS.forEach(brand => {
+      initial[brand.id] = brand.id;
+    });
+    return initial;
+  });
+
+  const [columnMessages, setColumnMessages] = useState<Record<string, ChatMessage[]>>(() => {
+    const initial: Record<string, ChatMessage[]> = {};
+    MODEL_BRANDS.forEach(brand => {
+      initial[brand.id] = [];
+    });
+    return initial;
+  });
+
+  const [imageFiestaResults, setImageFiestaResults] = useState<Record<string, any[]>>(() => {
+    const initial: Record<string, any[]> = {};
+    IMAGE_FIESTA_BRAND_IDS.forEach(id => (initial[id] = []));
+    return initial;
+  });
+  const [isImageGenerating, setIsImageGenerating] = useState(false);
+  const [enabledImageModels, setEnabledImageModels] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const syncImageModels = () => {
+      const saved = localStorage.getItem("superai_enabled_image_models");
+      if (saved) {
+        setEnabledImageModels(JSON.parse(saved));
+      } else {
+        const initial: Record<string, boolean> = {};
+        IMAGE_FIESTA_BRAND_IDS.forEach(id => (initial[id] = true));
+        setEnabledImageModels(initial);
+      }
+    };
+    syncImageModels();
+    window.addEventListener("settingsChanged", syncImageModels);
+    return () => window.removeEventListener("settingsChanged", syncImageModels);
+  }, []);
+
+  const toggleImageModelEnabled = (brandId: string) => {
+    setEnabledImageModels(prev => ({ ...prev, [brandId]: !prev[brandId] }));
+  };
+
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const [userStatus, setUserStatus] = useState<any>(null);
+
+  useEffect(() => {
+    fetchUserStatus();
+  }, []);
+
+  const fetchUserStatus = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/user-status`, {
+        headers: { "email": session?.user?.email || "", "x-user-email": session?.user?.email || "unknown" }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserStatus(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleModelChange = (brandId: string, newModelId: string) => {
+    setSelectedModels(prev => ({ ...prev, [brandId]: newModelId }));
+  };
+
+  const streamResponse = async (brandId: string, userPrompt: string, selectedModelId: string, assistantMsgId: string) => {
+    try {
+      const currentPersona = localStorage.getItem("superai_persona") || "Professional";
+      const currentWebSearch = localStorage.getItem("superai_websearch") === "true";
+
+      const res = await fetch(`${BACKEND_URL}/chat/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": session?.user?.email || "unknown"
+        },
+        body: JSON.stringify({
+          prompt: userPrompt,
+          models: [selectedModelId],
+          personality: currentPersona,
+          web_search: currentWebSearch,
+          user_email: session?.user?.email || "unknown"
+        })
+      });
+
+      if (!res.ok) throw new Error("Network response was not ok");
+      fetchUserStatus();
+      if (!res.body) throw new Error("No body in response");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      let done = false;
+      let fullText = "";
+      let buffer = "";
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() || "";
+
+          for (const line of parts) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.substring(6));
+                if (data.chunk) {
+                  fullText += data.chunk;
+                  setColumnMessages(prev => {
+                    const next = { ...prev };
+                    const messages = next[brandId];
+                    const msgIndex = messages.findIndex(m => m.id === assistantMsgId);
+                    if (msgIndex !== -1) {
+                      messages[msgIndex] = { ...messages[msgIndex], content: fullText };
+                      next[brandId] = [...messages];
+                    }
+                    return next;
+                  });
+                }
+              } catch (e) {
+                console.error("Partial JSON chunk", e);
+              }
+            }
+          }
+        }
+      }
+
+      setColumnMessages(prev => {
+        const next = { ...prev };
+        const messages = next[brandId];
+        const msgIndex = messages.findIndex(m => m.id === assistantMsgId);
+        if (msgIndex !== -1) {
+          messages[msgIndex] = { ...messages[msgIndex], isStreaming: false };
+          next[brandId] = [...messages];
+        }
+        return next;
+      });
+
+    } catch (error) {
+      setColumnMessages(prev => {
+        const next = { ...prev };
+        const messages = next[brandId];
+        const msgIndex = messages.findIndex(m => m.id === assistantMsgId);
+        if (msgIndex !== -1) {
+          messages[msgIndex] = { ...messages[msgIndex], content: "Error connecting to model.", isStreaming: false };
+          next[brandId] = [...messages];
+        }
+        return next;
+      });
+    }
+  };
+
+  const handleImageFiestaGenerate = async (userPrompt: string) => {
+    if (!userPrompt.trim() || isImageGenerating) return;
+    setIsImageGenerating(true);
+
+    try {
+      // Parallel generation calling our backend (HF/OR Inference)
+      let activeModelIds = IMAGE_FIESTA_BRAND_IDS.filter(id => enabledImageModels[id]);
       
-      {/* ===== ATMOSPHERIC BACKGROUND ===== */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <motion.div 
-          animate={{ x: [0, 60, 0], y: [0, -40, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-15%] right-[5%] w-[800px] h-[800px] bg-purple-600/[0.03] blur-[150px] rounded-full" 
-        />
-        <motion.div 
-          animate={{ x: [0, -50, 0], y: [0, 70, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-15%] left-[-5%] w-[900px] h-[900px] bg-blue-600/[0.03] blur-[150px] rounded-full" 
-        />
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
+      // RESTRICTION: Only 2 models for free users
+      if (!isAuthorized) {
+        activeModelIds = activeModelIds.slice(0, 2);
+      }
 
-      {/* ===== FLOATING NAVBAR ===== */}
-      <nav className="fixed top-10 left-0 right-0 z-[100] px-6">
-        <motion.div 
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className={`max-w-4xl mx-auto h-16 rounded-full border transition-all duration-700 flex items-center justify-between px-10 backdrop-blur-3xl
-            ${scrolled ? "bg-black/95 border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.8)] scale-95" : "bg-white/5 border-white/5"}`}
-        >
-          <Link href="/" className="flex items-center gap-4 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-700 flex items-center justify-center shadow-[0_0_25px_rgba(123,97,255,0.4)] group-hover:rotate-[15deg] transition-transform">
-              <Sparkles size={18} className="text-white" />
+      const generationPromises = activeModelIds.map(async (modelId) => {
+        try {
+          const res = await fetch(`${BACKEND_URL}/chat/image-generate`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              prompt: userPrompt,
+              model_id: modelId,
+              user_email: session?.user?.email || "unknown"
+            })
+          });
+
+          if (!res.ok) {
+            const errData = await res.json();
+             throw new Error(errData.detail || "Generation failed");
+          }
+
+          const data = await res.json();
+          const imageUrl = data.image; // Base64 or URL
+
+          const result = {
+            id: Math.random().toString(36).substring(7),
+            url: imageUrl,
+            prompt: userPrompt,
+            timestamp: Date.now()
+          };
+
+          setImageFiestaResults(prev => ({
+            ...prev,
+            [modelId]: [result, ...prev[modelId]]
+          }));
+        } catch (err) {
+          console.error(`Generation failed for ${modelId}`, err);
+        }
+      });
+
+      await Promise.all(generationPromises);
+    } catch (error) {
+      console.error("Global image generation failure", error);
+    } finally {
+      setIsImageGenerating(false);
+    }
+  };
+
+  const handleSendPrompt = async (customPrompt?: string, targetModels?: string[]) => {
+    const userPrompt = customPrompt || prompt;
+    if (!userPrompt.trim() || isStreaming) return;
+
+    if (!isAuthorized && messageCount >= FREE_MESSAGE_LIMIT) {
+      alert(`Limit Reached! You have used your ${FREE_MESSAGE_LIMIT} free messages for today. Please enter the access key for unlimited chats.`);
+      return;
+    }
+
+    setIsStreaming(true);
+    setRankings([]);
+    if (!customPrompt) setPrompt("");
+
+    const userMsgId = Date.now().toString();
+    const newUserMessage: ChatMessage = { id: userMsgId, role: "user", content: userPrompt };
+
+    if (activeTab === "superfiesta") {
+      setFiestaHistory(prev => [{ id: userMsgId, prompt: userPrompt, timestamp: Date.now() }, ...prev]);
+    }
+
+    const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
+
+    setColumnMessages(prev => {
+      const next = { ...prev };
+      fiestaBrands.forEach((brand: AIBrand) => {
+        const assistantMsgId = `assistant-${brand.id}-${userMsgId}`;
+        const isTargeted = targetModels ? targetModels.includes(brand.id) : enabledModels[brand.id];
+
+        if (isTargeted) {
+          next[brand.id] = [
+            ...next[brand.id],
+            newUserMessage,
+            { id: assistantMsgId, role: "assistant", content: "", isStreaming: true }
+          ];
+        } else {
+          next[brand.id] = [
+            ...next[brand.id],
+            newUserMessage
+          ];
+        }
+      });
+      return next;
+    });
+
+    const effectiveModels = targetModels
+      ? fiestaBrands.filter(b => targetModels.includes(b.brandId))
+      : fiestaBrands.filter(b => enabledModels[b.brandId]);
+
+    // RESTRICTION: Only 3 models for free users
+    const limitedModels = !isAuthorized ? effectiveModels.slice(0, 3) : effectiveModels;
+
+    const promises = limitedModels.map(brand => {
+      const exactMsgId = `assistant-${brand.id}-${userMsgId}`;
+      const selectedModelId = selectedModels[brand.id] || brand.id;
+      return streamResponse(brand.id, userPrompt, selectedModelId, exactMsgId);
+    });
+
+    await Promise.all(promises);
+    incrementMessageCount();
+    setIsStreaming(false);
+  };
+
+  const handleRank = async () => {
+    const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
+    const answers: Record<string, string> = {};
+    fiestaBrands.forEach(brand => {
+      const msgs = columnMessages[brand.id];
+      const lastMsg = msgs[msgs.length - 1];
+      if (lastMsg?.role === "assistant") {
+        answers[brand.id] = lastMsg.content;
+      }
+    });
+
+    if (Object.keys(answers).length < 2) return;
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/chat/rank`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": session?.user?.email || "unknown"
+        },
+        body: JSON.stringify({
+          original_prompt: columnMessages[fiestaBrands[0].id]?.find(m => m.role === "user")?.content || "Rate the answers",
+          answers: answers,
+          user_email: session?.user?.email || "unknown"
+        })
+      });
+
+      if (!res.ok) throw new Error("Ranking failed");
+      const data = await res.json();
+      if (data.rankings && Array.isArray(data.rankings)) {
+        setRankings(data.rankings);
+      }
+    } catch (e) {
+      console.error("Failed to rank", e);
+    }
+  };
+
+  const handleMerge = async () => {
+    const fiestaBrands = MODEL_BRANDS.filter(b => FIESTA_BRAND_IDS.includes(b.brandId));
+    const answers = fiestaBrands.map(brand => {
+      const msgs = columnMessages[brand.id];
+      const lastMsg = msgs[msgs.length - 1];
+      return lastMsg?.role === "assistant" ? lastMsg.content : "";
+    }).filter(a => a.length > 0);
+
+    if (answers.length < 2) return;
+
+    const newId = Date.now().toString();
+    setColumnMessages(prev => {
+      const next = { ...prev };
+      fiestaBrands.forEach(brand => {
+        next[brand.id] = [
+          ...next[brand.id],
+          { id: `merge-${brand.id}-${newId}`, role: "assistant", content: "", isStreaming: true }
+        ];
+      });
+      return next;
+    });
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/chat/merge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": session?.user?.email || "unknown"
+        },
+        body: JSON.stringify({
+          original_prompt: columnMessages[fiestaBrands[0].id]?.find(m => m.role === "user")?.content || "Merged user prompt",
+          answers: answers,
+          user_email: session?.user?.email || "unknown"
+        })
+      });
+
+      if (!res.ok) throw new Error("Merge failed");
+      if (!res.body) throw new Error("No body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let done = false;
+      let fullText = "### 🧠 **Combined AI Insight**\n\n---\n\n";
+      let buffer = "";
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() || "";
+
+          for (const line of parts) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.substring(6));
+                if (data.chunk) {
+                  fullText += data.chunk;
+                  setColumnMessages(prev => {
+                    const next = { ...prev };
+                    fiestaBrands.forEach(brand => {
+                      const msgs = next[brand.id];
+                      const msgIndex = msgs.findIndex(m => m.id === `merge-${brand.id}-${newId}`);
+                      if (msgIndex !== -1) {
+                        msgs[msgIndex] = { ...msgs[msgIndex], content: fullText };
+                        next[brand.id] = [...msgs];
+                      }
+                    });
+                    return next;
+                  });
+                }
+              } catch (e) {
+                console.error("Partial JSON in merge", e);
+              }
+            }
+          }
+        }
+      }
+
+      setColumnMessages(prev => {
+        const next = { ...prev };
+        MODEL_BRANDS.forEach(brand => {
+          const msgs = next[brand.id];
+          const msgIndex = msgs.findIndex(m => m.id === `merge-${brand.id}-${newId}`);
+          if (msgIndex !== -1) {
+            msgs[msgIndex] = { ...msgs[msgIndex], isStreaming: false };
+            next[brand.id] = [...msgs];
+          }
+        });
+        return next;
+      });
+
+    } catch (e) {
+      console.error("Merge failed", e);
+    }
+  };
+
+  const handleClearColumn = (brandId: string) => {
+    setColumnMessages(prev => ({
+      ...prev,
+      [brandId]: []
+    }));
+  };
+
+  const handleRegenerate = (brandId: string, msgId: string) => {
+    if (isStreaming) return;
+    const msgs = columnMessages[brandId];
+    const msgIdx = msgs.findIndex(m => m.id === msgId);
+    if (msgIdx > 0) {
+      const userMsg = msgs[msgIdx - 1];
+      if (userMsg && userMsg.role === "user") {
+        handleSendPrompt(userMsg.content, [brandId]);
+      }
+    }
+  };
+
+  const toggleSettings = () => setIsSettingsOpen(!isSettingsOpen);
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullScreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullScreen(false);
+    }
+  };
+
+
+
+  return (
+    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden transition-colors duration-500">
+      <div className="premium-grain" />
+      {/* Sidebar Overlay (mobile) */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col transition-all duration-300 ease-in-out transform aurora-bg ${sidebarOpen ? (sidebarCollapsed ? "-translate-x-full" : "translate-x-0") : "-translate-x-full"} md:relative md:translate-x-0 ${sidebarCollapsed ? "md:w-0 md:opacity-0" : "md:w-72 md:opacity-100"} bg-panel/80 backdrop-blur-3xl border-r border-panel-border overflow-hidden`}
+      >
+        {/* Logo */}
+        <div className="p-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg transform transition-transform hover:rotate-6 flex items-center justify-center bg-white/5 border border-white/10 logo-glow">
+              <img src="/logos/logo.png" alt="Fiesta AI" className="w-full h-full object-cover" />
             </div>
-            <span className="font-semibold text-[14px] tracking-widest uppercase text-white/90">Fiesta AI Hub</span>
-          </Link>
-
-          <div className="hidden lg:flex items-center gap-12">
-            {["INTELLIGENCE", "ARCHITECT", "FAQ"].map((item, idx) => (
-              <button 
-                key={item} 
-                onClick={() => scrollTo(["ecosystem", "engine", "faq"][idx])} 
-                className="text-[12px] font-black uppercase tracking-[0.3em] text-white/30 hover:text-white transition-colors"
-                style={{ transitionDelay: `${idx * 100}ms` }}
-              >
-                {item}
-              </button>
-            ))}
+            <h1 className="text-xl font-black tracking-tight text-foreground">SUPER AI</h1>
           </div>
-
-          <Link
-            href="/app"
-            className="px-8 py-3 rounded-full bg-white text-black text-[12px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all active:scale-95 shadow-xl"
+          <button 
+            className="text-foreground/20 hover:text-foreground transition-colors p-1 rounded-lg hover:bg-foreground/5" 
+            onClick={() => setSidebarCollapsed(true)}
+            title="Collapse Sidebar"
           >
-            Launch Terminal
-          </Link>
-        </motion.div>
-      </nav>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-      {/* ===== HERO SECTION ===== */}
-      <section className="relative pt-80 pb-32 px-6">
-        <motion.div 
-          variants={STAGGER_CONTAINER}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="relative z-10 max-w-7xl mx-auto text-center"
-        >
-          <motion.div
-            variants={FADE_UP}
-            className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/10 text-white/40 text-[11px] font-black uppercase tracking-[0.5em] mb-16 shadow-2xl backdrop-blur-md"
+        {/* New Conversation */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => {
+              MODEL_BRANDS.forEach(brand => {
+                setColumnMessages(prev => ({ ...prev, [brand.brandId]: [] }));
+              });
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-95 shadow-xl shadow-accent/20"
+            style={{ background: "linear-gradient(135deg, #10b981, #059669, #3b82f6)" }}
           >
-            <Radio size={12} className="text-purple-500 animate-pulse" />
-            31 Active Neural Clusters Verified | BUILT BY X-AI GROUP
-          </motion.div>
+            <Plus className="w-5 h-5" /> New Conversation
+          </button>
+        </div>
 
-          <motion.h1 
-            variants={FADE_UP}
-            className="text-[clamp(3.5rem,14vw,8.5rem)] font-semibold tracking-tighter text-white leading-[0.82] mb-16"
+        {/* Search */}
+        <div className="px-4 pb-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/20" size={14} />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-full bg-foreground/5 border border-panel-border rounded-xl pl-9 pr-3 py-2.5 text-xs text-foreground placeholder-foreground/40 outline-none focus:border-accent/40 transition-all font-medium"
+            />
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <button
+            onClick={() => setActiveTab("superfiesta")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${activeTab === "superfiesta" ? "bg-accent/10 border border-accent/20 text-accent shadow-lg shadow-accent/5" : "text-foreground/40 hover:bg-foreground/5 hover:text-foreground"}`}
           >
-            Synchronize <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-500 to-blue-400 animate-shimmer bg-[length:200%_auto]">Your Essence.</span>
-          </motion.h1>
+            <div className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${activeTab === "superfiesta" ? "bg-accent/20" : "bg-foreground/5"}`}>
+              <Sparkles className="w-5 h-5 text-accent" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-xs font-bold uppercase tracking-widest">Super Fiesta</span>
+              <span className="text-[9px] font-medium opacity-50">Multi-Model Arena</span>
+            </div>
+          </button>
 
-          <motion.p 
-            variants={FADE_UP}
-            className="text-[18px] md:text-[22px] text-white/30 max-w-3xl mx-auto mb-20 leading-relaxed font-medium tracking-wide normal-case"
+          <button
+            onClick={() => setActiveTab("sora")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${activeTab === "sora" ? "bg-accent/10 border border-accent/20 text-accent shadow-lg shadow-accent/5" : "text-foreground/40 hover:bg-foreground/5 hover:text-foreground"}`}
           >
-            The pinnacle of unified orchestration. Fiesta AI synchronizes 31+ flagship models into a single, high-fidelity environment for reasoning, vision, and art.
-          </motion.p>
+            <div className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${activeTab === "sora" ? "bg-accent/20" : "bg-foreground/5"}`}>
+              <Zap className="w-5 h-5 text-[#6c63ff]" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-xs font-bold uppercase tracking-widest">Sora Mode</span>
+              <span className="text-[9px] font-medium opacity-50">Cinematic Video</span>
+            </div>
+          </button>
 
-          <motion.div 
-            variants={FADE_UP}
-            className="flex flex-col sm:flex-row items-center justify-center gap-10"
+          <button
+            onClick={() => setActiveTab("image_fiesta")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${activeTab === "image_fiesta" ? "bg-accent/10 border border-accent/20 text-accent shadow-lg shadow-accent/5" : "text-foreground/40 hover:bg-foreground/5 hover:text-foreground"}`}
           >
-            <Link
-              href="/app"
-              className="px-20 py-8 rounded-[3rem] bg-white text-black font-black text-[16px] uppercase tracking-widest hover:scale-110 hover:shadow-[0_25px_80px_rgba(123,97,255,0.4)] transition-all active:scale-95 flex items-center gap-4 shadow-2xl"
-            >
-              Enter Hub
-              <ArrowRight size={24} />
-            </Link>
-            <button
-              onClick={() => scrollTo("ecosystem")}
-              className="px-20 py-8 rounded-[3rem] border border-white/15 bg-white/5 text-white/60 font-bold text-[16px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all shadow-xl backdrop-blur-lg"
-            >
-              The Ecosystem
-            </button>
-          </motion.div>
-        </motion.div>
-      </section>
+            <div className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${activeTab === "image_fiesta" ? "bg-accent/20" : "bg-foreground/5"}`}>
+              <ImageIcon className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                Image Mode
+              </span>
+              <span className="text-[9px] font-medium opacity-50">Unlimited Synthesis</span>
+            </div>
+          </button>
 
-      {/* ===== NEW: INFINITE MODEL MARQUEE ===== */}
-      <section id="ecosystem" className="py-24 border-y border-white/5 relative bg-white/[0.01] overflow-hidden">
-        <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-black to-transparent z-10" />
-        <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-black to-transparent z-10" />
+          <button
+            onClick={() => setActiveTab("prompt_ai")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${activeTab === "prompt_ai" ? "bg-accent/10 border border-accent/20 text-accent shadow-lg shadow-accent/5" : "text-foreground/40 hover:bg-foreground/5 hover:text-foreground"}`}
+          >
+            <div className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${activeTab === "prompt_ai" ? "bg-accent/20" : "bg-foreground/5"}`}>
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                Prompt AI
+              </span>
+              <span className="text-[9px] font-medium opacity-50">Intelligent Prompt Engineering</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("super_search")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${activeTab === "super_search" ? "bg-accent/10 border border-accent/20 text-accent shadow-lg shadow-accent/5" : "text-foreground/40 hover:bg-foreground/5 hover:text-foreground"}`}
+          >
+            <div className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${activeTab === "super_search" ? "bg-accent/20" : "bg-foreground/5"}`}>
+              <Search className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                Super Search
+              </span>
+              <span className="text-[9px] font-medium opacity-50">Deep Research AI</span>
+            </div>
+          </button>
+
+
+
+          <button
+            onClick={() => window.location.href = '/admin'}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all"
+          >
+            <Shield size={18} className="text-indigo-400" />
+            Admin Panel
+          </button>
+
+          {/* RECENTS */}
+          <div className="pt-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 px-4 pb-2">Recents</p>
+            <p className="text-xs text-foreground/40 italic px-4 font-bold">No threads yet</p>
+          </div>
+        </nav>
+
+        {/* Bottom: Settings + User */}
+        <div className="p-4 border-t border-panel-border space-y-2">
+          <button
+            onClick={toggleSettings}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all"
+          >
+            <Settings size={18} />
+            Settings
+          </button>
+
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-foreground/5 border border-panel-border relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-blue-500/10 to-accent/10 animate-slow-pan opacity-50" />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm text-white shadow-lg relative z-10" style={{ background: "linear-gradient(135deg, #10b981, #3b82f6)" }}>
+              <Sparkles size={16} />
+            </div>
+            <div className="flex-1 overflow-hidden relative z-10">
+              <p className="text-xs font-black text-foreground truncate uppercase">Quantum Access</p>
+              <p className="text-[10px] text-foreground/50 truncate uppercase font-bold tracking-tighter">
+                Super AI Pro Network
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-background">
         
-        <div className="flex flex-col gap-14">
-          <motion.div 
-             animate={{ x: [0, -2800] }}
-             transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-             className="flex gap-24 whitespace-nowrap"
-          >
-            {[...ALL_MODELS, ...ALL_MODELS].map((m, i) => (
-              <div key={i} className="flex items-center gap-6 group">
-                <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-white/10 group-hover:scale-110 transition-all overflow-hidden p-1.5 grayscale group-hover:grayscale-0">
-                  <img src={m.logo} alt={m.name} className="w-full h-full object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                </div>
-                <span className="text-[22px] font-black text-white/20 group-hover:text-white transition-all uppercase tracking-tighter">{m.name}</span>
-              </div>
-            ))}
-          </motion.div>
-          <motion.div 
-             animate={{ x: [-2800, 0] }}
-             transition={{ duration: 55, repeat: Infinity, ease: "linear" }}
-             className="flex gap-24 whitespace-nowrap opacity-50"
-          >
-            {[...[...ALL_MODELS].reverse(), ...ALL_MODELS].map((m, i) => (
-              <div key={i} className="flex items-center gap-6 group scale-90">
-                <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-white/10 group-hover:scale-110 transition-all overflow-hidden p-1.5 grayscale">
-                  <img src={m.logo} alt={m.name} className="w-full h-full object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                </div>
-                <span className="text-[22px] font-black text-white/10 group-hover:text-white/40 transition-all uppercase tracking-tighter">{m.name}</span>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ===== ENGINE PREVIEW ===== */}
-      <section id="engine" className="py-48 px-6 border-b border-white/10 bg-black relative">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
-           <motion.div
-             initial={{ opacity: 0, x: -40 }}
-             whileInView={{ opacity: 1, x: 0 }}
-             viewport={{ once: true }}
-             className="space-y-12"
-           >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-px bg-purple-500/50" />
-                <div className="text-purple-500 text-[12px] font-black tracking-[0.7em] uppercase">Architecture v6</div>
-              </div>
-              <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter uppercase leading-[0.88]">Unified <br/> Orchestration.</h2>
-              <p className="text-white/30 text-[20px] font-medium leading-relaxed normal-case">
-                Fiesta AI analyzes every query through a professional meta-eval layer, identifying which node in the global cloud is best equipped for your specific intent.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-                 {[
-                   { t: "31 Nodes", d: "Global Cluster Scale" },
-                   { t: "1.2ms Switch", d: "Engine Latency" },
-                   { t: "High IQ", d: "Deep Reasoning Evals" },
-                   { t: "Fused Art", d: "Tencent & ByteDance" }
-                 ].map((item, i) => (
-                   <div key={i} className="space-y-2 border-l-2 border-purple-500/20 pl-6">
-                      <div className="text-[15px] font-black uppercase tracking-widest">{item.t}</div>
-                      <div className="text-[11px] text-white/20 uppercase tracking-widest">{item.d}</div>
-                   </div>
-                 ))}
-              </div>
-           </motion.div>
-           <motion.div
-             initial={{ opacity: 0, scale: 0.9 }}
-             whileInView={{ opacity: 1, scale: 1 }}
-             viewport={{ once: true }}
-           >
-              <NeuralEnginePreview />
-           </motion.div>
-        </div>
-      </section>
-
-      {/* ===== NEW: PERFORMANCE BENTO GRID ===== */}
-      <section className="py-48 px-6 bg-black relative overflow-hidden">
-        <div className="absolute top-0 right-[-10%] w-[500px] h-[500px] bg-indigo-500/[0.02] blur-[150px] rounded-full" />
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }} 
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-32"
-          >
-            <h2 className="text-5xl md:text-7xl font-semibold tracking-tighter uppercase">Power Deployment.</h2>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-12 auto-rows-[320px] gap-8">
-            {FEATURES.map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -8, scale: 1.01 }}
-                className={`${f.grid} p-12 rounded-[4rem] border border-white/5 bg-[#050505] relative group transition-all overflow-hidden shadow-2xl`}
-              >
-                <div className={`absolute -right-32 -top-32 w-80 h-80 ${f.glow} blur-[120px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000`} />
-                <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center mb-10 border border-white/10 shadow-xl group-hover:bg-white/10 transition-colors">
-                  {f.icon}
-                </div>
-                <h3 className="text-2xl font-semibold mb-5 tracking-tight uppercase">{f.title}</h3>
-                <p className="text-white/20 text-[16px] font-medium leading-relaxed tracking-tight uppercase">{f.desc}</p>
-                <div className="absolute bottom-8 right-12 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-white/20">
-                   <span className="text-[10px] font-bold tracking-widest uppercase">Select Mode</span>
-                   <ArrowRight size={14} />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== MISSION TRANSPARENCY ===== */}
-      <section className="py-48 px-6 border-t border-white/10 bg-[#020202]">
-        <div className="max-w-5xl mx-auto text-center space-y-16">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              className="inline-flex items-center gap-3 px-8 py-2.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 text-[12px] font-black tracking-[0.5em] uppercase"
+        {/* Floating Sidebar Toggle (Persistent when collapsed or on mobile) */}
+        {(!sidebarOpen || sidebarCollapsed) && (
+          <div className="absolute top-6 left-6 z-[60]">
+            <button 
+              onClick={() => { setSidebarCollapsed(false); setSidebarOpen(true); }}
+              className="group relative p-3 bg-panel/80 backdrop-blur-2xl border border-panel-border rounded-[1.25rem] text-foreground/50 hover:text-foreground hover:border-accent/30 transition-all shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:scale-105 active:scale-95"
+              title="Expand Workspace"
             >
-              The Vision Protocol
-            </motion.div>
-            <h2 className="text-6xl md:text-9xl font-semibold tracking-tighter uppercase leading-[0.85]">Intelligence <br/> For Everyone.</h2>
-            <p className="text-white/30 text-[22px] font-medium leading-relaxed normal-case max-w-3xl mx-auto">
-              We believe elite neural orchestration should be accessible to every creative human. Fiesta AI is built for absolute privacy and zero-friction scale.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-10 text-left">
-               {[
-                 { t: "Account-Free", d: "No registration nodes. Ever.", c: "text-purple-400" },
-                 { t: "Zero-Cost", d: "Enterprise logic at consumer scale.", c: "text-blue-400" },
-                 { t: "Node-Privacy", d: "Ephemeral processing isolation.", c: "text-indigo-400" }
-               ].map((item, i) => (
-                 <motion.div 
-                   key={i}
-                   whileHover={{ y: -5 }}
-                   className="p-12 rounded-[3.5rem] border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors"
-                 >
-                    <div className={`text-[14px] font-black tracking-widest uppercase mb-4 ${item.c}`}>{item.t}</div>
-                    <p className="text-[15px] text-white/20 font-medium leading-relaxed uppercase">{item.d}</p>
-                 </motion.div>
-               ))}
-            </div>
-        </div>
-      </section>
+              <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-[1.25rem] blur-xl" />
+              <Menu className="w-5 h-5 relative z-10" />
+            </button>
+          </div>
+        )}
 
-      {/* ===== PERFORMANCE TICKER ===== */}
-      <section className="py-24 border-y border-white/5 bg-black overflow-hidden group">
-         <motion.div 
-           animate={{ x: [-1500, 0] }}
-           transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-           className="flex gap-40 whitespace-nowrap"
-         >
-            {[1,2,3].map(set => (
-              <div key={set} className="flex gap-40">
-                {[
-                  { m: "GPT-4o", lat: "1.2s", iq: "98.2" },
-                  { m: "Claude 3.5", lat: "1.4s", iq: "99.1" },
-                  { m: "Gemini 1.5", lat: "0.8s", iq: "96.4" },
-                  { m: "DeepSeek V3", lat: "2.1s", iq: "97.8" }
-                ].map((stat, i) => (
-                  <div key={i} className="flex items-center gap-12">
-                    <div className="text-[14px] font-black text-white/30 uppercase tracking-[0.3em]">{stat.m}</div>
-                    <div className="flex gap-4">
-                       <span className="text-[12px] font-bold text-white/10 uppercase">Speed: {stat.lat}</span>
-                       <span className="text-[12px] font-bold text-purple-500/40 uppercase">IQ: {stat.iq}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-         </motion.div>
-      </section>
+        {/* Header */}
+        {/* Header - Hidden in SuperFiesta & Sora as per user request */}
+        {activeTab !== "superfiesta" && activeTab !== "sora" && activeTab !== "image_fiesta" && activeTab !== "prompt_ai" && activeTab !== "super_search" && (
+          <header className="h-16 flex items-center justify-between px-6 border-b border-panel-border z-40 bg-background/80 backdrop-blur-xl shrink-0">
 
-      {/* ===== PARTNER BANNER ===== */}
-      <section className="py-64 px-6 relative overflow-hidden bg-black">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="max-w-7xl mx-auto rounded-[6rem] border border-white/10 bg-[#070707] p-24 md:p-36 text-center relative shadow-[0_100px_200px_rgba(0,0,0,1)] group overflow-hidden"
-        >
-          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
-          <div className="relative z-10 space-y-16">
-            <div className="inline-flex items-center gap-2.5 px-6 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[11px] font-black tracking-[0.5em] uppercase shadow-lg">Network Node Partner</div>
-            <h2 className="text-5xl md:text-9xl font-semibold tracking-tighter leading-[0.85] text-white uppercase">Try tracker app <br/> from X-ai group.</h2>
-            <p className="text-white/20 text-[20px] max-w-xl mx-auto font-medium leading-relaxed uppercase tracking-widest">
-              Seamlessly monitor node synchronization and creative evolution across the globe.
-            </p>
-            <div className="pt-12">
-              <Link
-                href="https://super-in-ai.vercel.app"
-                target="_blank"
-                className="inline-flex items-center gap-8 px-20 py-8 rounded-[3.5rem] bg-white text-black font-black text-[18px] uppercase tracking-widest hover:scale-110 hover:shadow-[0_0_100px_rgba(123,97,255,0.4)] transition-all active:scale-95 shadow-2xl"
+          <div className="flex items-center gap-4">
+            {(sidebarCollapsed || !sidebarOpen) && (
+              <button 
+                className="p-2.5 bg-accent/10 border border-accent/20 rounded-xl text-accent hover:bg-accent/20 transition-all animate-in fade-in slide-in-from-left-4" 
+                onClick={() => { setSidebarCollapsed(false); setSidebarOpen(true); }}
               >
-                Launch Tracker Terminal
-                <ArrowRight size={28} />
-              </Link>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ===== FAQ SECTION ===== */}
-      <section id="faq" className="py-48 px-6 border-t border-white/10 bg-gradient-to-b from-transparent to-purple-950/20">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-40 space-y-8"
-          >
-             <div className="text-purple-500 text-[12px] font-black uppercase tracking-[0.7em]">Support Layer</div>
-             <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter text-white uppercase">Neural FAQ.</h2>
-          </motion.div>
-          <motion.div 
-            variants={STAGGER_CONTAINER}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="space-y-8 text-left"
-          >
-            {FAQS.map((faq, i) => <FAQItem key={i} {...faq} />)}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ===== FOOTER ===== */}
-      <footer className="py-48 px-6 border-t border-white/10 bg-[#000000]">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-24 mb-40">
-            <div className="space-y-16">
-              <div className="flex items-center gap-5 justify-center lg:justify-start">
-                <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 flex items-center justify-center border border-white/10 shadow-2xl overflow-hidden">
-                  <img src="/logos/logo.png" alt="Fiesta Network" className="w-full h-full object-cover" />
-                </div>
-                <span className="font-semibold text-4xl tracking-tighter uppercase whitespace-nowrap">Fiesta Network</span>
-              </div>
-              <p className="max-w-sm text-white/30 text-[16px] font-bold leading-relaxed tracking-widest uppercase mx-auto lg:mx-0 border-l-[6px] border-purple-500/20 pl-10">
-                Absolute unified neural orchestration for the visions of 2026.
-              </p>
-              <div className="flex items-center gap-8 pt-6 justify-center lg:justify-start">
-                {[Twitter, Instagram, Linkedin, Github].map((Icon, idx) => (
-                  <a key={idx} href={[
-                    "https://x.com/Soraion_app",
-                    "https://www.instagram.com/sora.ion_app",
-                    "https://www.linkedin.com/in/bhavesh-kori-b39a79305",
-                    "https://github.com/sora-ion-dev"
-                  ][idx]} target="_blank" className="p-5 rounded-[1.5rem] bg-white/5 hover:text-white text-white/20 transition-all hover:bg-purple-600/30 group">
-                    <Icon size={28} className="group-hover:scale-110 transition-transform" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-32 lg:gap-48 mx-auto lg:mx-0">
-              <div className="space-y-10 text-left">
-                <h4 className="text-[12px] font-black uppercase tracking-[0.6em] text-white/20">Ecology</h4>
-                <div className="flex flex-col gap-8">
-                  {["Intelligence", "Experience", "Support Hub"].map((l, idx) => (
-                    <button key={l} onClick={() => scrollTo(["ecosystem", "engine", "faq"][idx])} className="text-left text-[17px] font-black text-white/40 hover:text-white transition-colors tracking-tight uppercase whitespace-nowrap">{l}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-10 text-left">
-                <h4 className="text-[12px] font-black uppercase tracking-[0.6em] text-white/20">Network</h4>
-                <div className="flex flex-col gap-8">
-                  <a href="mailto:owner.superai@gmail.com" className="text-[17px] font-black text-white/40 hover:text-white transition-colors tracking-tight uppercase whitespace-nowrap">Cloud Support</a>
-                  <div className="flex items-center gap-4 text-[15px] font-black text-green-500 tracking-widest uppercase bg-green-500/5 px-6 py-2 rounded-full border border-green-500/20 shadow-xl">
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                    STATUS: SYNCED
-                  </div>
-                </div>
-              </div>
-            </div>
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
+            <h2 className="text-sm font-semibold text-foreground/80">
+              {(activeTab as string) === "superfiesta" ? "SuperFiesta Mode" : (activeTab as string) === "sora" ? "Sora Mode" : (activeTab as string) === "prompt_ai" ? "Prompt AI" : (activeTab as string).replace("_", " ")}
+            </h2>
           </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-center gap-16 pt-32 border-t border-white/5 grayscale opacity-20">
-            <span className="text-[11px] font-black uppercase tracking-[1em] text-white/40 group-hover:text-white transition-colors">© 2026 FIESTA AI NETWORK | BUILT BY X-AI GROUP</span>
-            <div className="flex items-center gap-5 text-[10px] uppercase tracking-[0.5em] font-black text-white/40">
-                 <Globe size={18} />
-                 EDGE-01 | VERSION_6.0.4
-            </div>
+          <div className="flex items-center gap-3">
+            <button onClick={toggleFullScreen} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-foreground/70 hover:text-foreground hover:bg-foreground/5 border border-panel-border transition-all">
+              <Maximize className="w-4 h-4" /> Full Screen
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-foreground/70 hover:text-foreground hover:bg-foreground/5 border border-panel-border transition-all">
+              <RefreshCw className="w-4 h-4" /> Rotate Keys
+            </button>
           </div>
-        </div>
-      </footer>
+        </header>
+        )}
+
+
+        {/* Tab Content */}
+        <section className="flex-1 overflow-hidden relative">
+          {activeTab === "sora" && <SoraMode enabledModels={enabledModels} isAuthorized={!!isAuthorized} />}
+          {activeTab === "superfiesta" && (
+            <AIFiestaMode
+              onSendPrompt={handleSendPrompt}
+              columnMessages={columnMessages}
+              selectedModels={selectedModels}
+              onModelChange={handleModelChange}
+              isStreaming={isStreaming}
+              rankings={rankings}
+              onRank={handleRank}
+              onMerge={handleMerge}
+              onRegenerate={handleRegenerate}
+              onClearColumn={handleClearColumn}
+              enabledModels={enabledModels}
+              onToggleEnabled={(bid) => setEnabledModels(prev => ({ ...prev, [bid]: !prev[bid] }))}
+              isAuthorized={!!isAuthorized}
+            />
+          )}
+          {activeTab === "image_fiesta" && (
+            <div className="h-full animate-in fade-in duration-700">
+               <ImageFiestaMode 
+                  onGenerate={handleImageFiestaGenerate}
+                  results={imageFiestaResults}
+                  isGenerating={isImageGenerating}
+                  enabledImageModels={enabledImageModels}
+                  onToggleEnabled={toggleImageModelEnabled}
+                  isAuthorized={!!isAuthorized}
+               />
+            </div>
+          )}
+          {activeTab === "prompt_ai" && <PromptMode />}
+          {activeTab === "super_search" && <SuperSearchMode />}
+        </section>
+
+        {isSettingsOpen && (
+          <SettingsModal 
+            isOpen={isSettingsOpen} 
+            onClose={() => setIsSettingsOpen(false)} 
+            userStatus={userStatus}
+            sessionImages={Object.values(imageFiestaResults).flat()}
+          />
+        )}
+      </main>
     </div>
   );
+
+  if (isAuthorized === null) {
+    return <AccessGate onAuthorized={handleAuthorized} />;
+  }
+
+  return MainAppContent;
 }

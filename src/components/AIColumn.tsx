@@ -55,7 +55,7 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
         <>
             {isFullScreen && <div className="min-w-[250px] max-w-[280px] w-full shrink-0 hidden md:block" />}
             <div
-                className={`flex flex-col flex-1 h-full min-h-[500px] overflow-hidden transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-50 rounded-none' : ''} ${!isEnabled ? 'opacity-30 grayscale' : 'opacity-100'}`}
+                className={`flex flex-col flex-1 h-full min-h-[500px] overflow-hidden transition-all duration-500 glass-glint ${isStreaming ? 'border-beam' : ''} ${isFullScreen ? 'fixed inset-0 z-50 rounded-none' : ''} ${!isEnabled ? 'opacity-30 grayscale' : 'opacity-100'}`}
                 style={{ backgroundColor: "transparent", border: "none" }}
             >
                 {/* Header - photo style */}
@@ -84,7 +84,7 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                 </div>
 
                 {/* Chat Area - photo style */}
-                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 hide-scrollbar custom-scrollbar bg-panel">
+                <div className="flex-1 overflow-y-auto p-5 pb-64 flex flex-col gap-6 hide-scrollbar custom-scrollbar bg-panel">
                     {messages.length === 0 ? (
                         <div className="m-auto text-center space-y-4 opacity-10">
                             <Brain size={48} className="mx-auto" />
@@ -103,22 +103,23 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                         msg.content
                                     ) : (
                                         <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-foreground/5 prose-pre:border prose-pre:border-panel-border`}>
-                                                {msg.content.includes("<thought>") ? (
+                                    {msg.content.includes("<thought>") || msg.content.includes("[Thinking]") || msg.content.includes("[Thought]") ? (
                                                   <div className="space-y-5">
-                                                    <details className="group bg-panel-border/10 rounded-[2rem] overflow-hidden border border-panel-border/30 transition-all hover:bg-panel-border/20">
+                                                    <details className="group bg-purple-500/[0.03] rounded-[2rem] overflow-hidden border border-purple-500/10 transition-all hover:bg-purple-500/[0.06]">
                                                       <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
-                                                        <div className="flex items-center gap-3 text-purple-400/80 group-hover:text-purple-400 transition-colors">
-                                                          <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                                                        <div className="flex items-center gap-3 text-purple-400/60 group-hover:text-purple-400 transition-colors">
+                                                          <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                                                             <Brain size={16} className="animate-pulse" />
                                                           </div>
-                                                          <span className="text-[11px] font-black uppercase tracking-[0.2em]">Thinking Process</span>
+                                                          <span className="text-[10px] font-black uppercase tracking-[0.3em]">Deep Reasoning Protocol</span>
                                                         </div>
-                                                        <ChevronDown size={14} className="text-foreground/20 group-open:rotate-180 transition-transform duration-300" />
+                                                        <ChevronDown size={14} className="text-foreground/20 group-open:rotate-180 transition-transform duration-500" />
                                                       </summary>
                                                       <div className="px-6 pb-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                                                         <div className="text-[14px] text-foreground/40 font-medium italic leading-relaxed pl-5 border-l-2 border-purple-500/20 whitespace-pre-wrap">
                                                           {(() => {
-                                                            const matches = Array.from(msg.content.matchAll(/<thought>([\s\S]*?)(?:<\/thought>|$)/g));
+                                                            const thoughtRegex = /(?:<thought>|\[Thinking\]|\[Thought\])([\s\S]*?)(?:<\/thought>|\[\/Thinking\]|\[\/Thought\]|$)/gi;
+                                                            const matches = Array.from(msg.content.matchAll(thoughtRegex));
                                                             return matches.map(m => m[1]).join("").trim() || "Deep reasoning analysis...";
                                                           })()}
                                                         </div>
@@ -156,7 +157,7 @@ export default function AIColumn({ brand, messages, selectedModelId, onModelChan
                                                         }
                                                       }}
                                                     >
-                                                        {msg.content.replace(/<thought>[\s\S]*?(?:<\/thought>|$)/g, "").trim()}
+                                                        {msg.content.replace(/(?:<thought>|\[Thinking\]|\[Thought\])[\s\S]*?(?:<\/thought>|\[\/Thinking\]|\[\/Thought\]|$)/gi, "").trim()}
                                                     </ReactMarkdown>
                                                   </div>
                                                 ) : (

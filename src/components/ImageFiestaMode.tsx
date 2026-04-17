@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Send, Plus, Mic, Loader2, ImageIcon, Sparkles, Wand2 } from "lucide-react";
+import { Send, Plus, Mic, Loader2, ImageIcon, Sparkles, Wand2, Lock as LockIcon } from "lucide-react";
 import { AIBrand } from "@/types";
 import { IMAGE_FIESTA_BRAND_IDS, MODEL_BRANDS } from "@/types";
 import ImageColumn from "./ImageColumn";
@@ -19,6 +19,7 @@ interface ImageFiestaModeProps {
     isGenerating: boolean;
     enabledImageModels: Record<string, boolean>;
     onToggleEnabled: (brandId: string) => void;
+    isAuthorized: boolean;
 }
 
 export default function ImageFiestaMode({ 
@@ -26,7 +27,8 @@ export default function ImageFiestaMode({
     results, 
     isGenerating,
     enabledImageModels,
-    onToggleEnabled
+    onToggleEnabled,
+    isAuthorized
 }: ImageFiestaModeProps) {
     const [prompt, setPrompt] = useState("");
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -56,17 +58,31 @@ export default function ImageFiestaMode({
                 style={{ scrollSnapType: "x mandatory" }}
             >
                 <div className="flex flex-row gap-4 min-w-max h-full">
-                    {imageBrands.filter(b => enabledImageModels[b.brandId]).map((brand, bIndex) => (
-                        <div key={brand.brandId} className="w-[85vw] md:w-[380px] flex-shrink-0 h-full scroll-snap-align-start transition-all duration-500 opacity-100 scale-100">
-                            <ImageColumn
-                                brand={brand}
-                                results={results[brand.brandId] || []}
-                                isGenerating={isGenerating}
-                                isEnabled={enabledImageModels[brand.brandId]}
-                                onToggleEnabled={() => onToggleEnabled(brand.brandId)}
-                            />
-                        </div>
-                    ))}
+                    {imageBrands.filter(b => enabledImageModels[b.brandId]).map((brand, bIndex) => {
+                        const isLocked = !isAuthorized && bIndex >= 2;
+                        return (
+                            <div key={brand.brandId} className={`w-[85vw] md:w-[380px] flex-shrink-0 h-full scroll-snap-align-start transition-all duration-500 ${isLocked ? 'opacity-40 grayscale pointer-events-none scale-95' : 'opacity-100 scale-100'}`}>
+                                <div className="relative h-full">
+                                    {isLocked && (
+                                        <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center p-8 text-center bg-background/20 backdrop-blur-sm rounded-[2.5rem]">
+                                            <div className="p-4 rounded-2xl bg-panel border border-panel-border shadow-2xl mb-4">
+                                                <LockIcon className="w-8 h-8 text-foreground/40" />
+                                            </div>
+                                            <h4 className="text-sm font-black uppercase tracking-widest text-foreground/60 mb-1">Visual Gate Locked</h4>
+                                            <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-tighter">Enter Access Key for Pro Multi-Synthesis</p>
+                                        </div>
+                                    )}
+                                    <ImageColumn
+                                        brand={brand}
+                                        results={results[brand.brandId] || []}
+                                        isGenerating={isGenerating}
+                                        isEnabled={enabledImageModels[brand.brandId]}
+                                        onToggleEnabled={() => onToggleEnabled(brand.brandId)}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
                     {imageBrands.filter(b => enabledImageModels[b.brandId]).length === 0 && (
                         <div className="flex-1 flex flex-col items-center justify-center text-center p-12 opacity-50">
                             <Wand2 className="w-12 h-12 mb-4 text-[#10b981]" />

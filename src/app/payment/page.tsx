@@ -52,7 +52,7 @@ export default function PaymentPage() {
                     <p className="text-gray-400 leading-relaxed mb-8">
                         We have received your request. Our team will verify the transaction and upgrade your account to Pro within few hours. You will receive an email confirmation.
                     </p>
-                    <button onClick={() => redirect("/app")} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-indigo-600/20">
+                    <button onClick={() => window.location.href = "/"} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-indigo-600/20">
                         Back to App
                     </button>
                 </div>

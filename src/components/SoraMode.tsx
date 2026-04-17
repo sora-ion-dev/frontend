@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Image as ImageIcon, Crown, AlertCircle, ChevronUp, ChevronDown, Paperclip, MoreHorizontal } from "lucide-react";
+import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Image as ImageIcon, Crown, AlertCircle, ChevronUp, ChevronDown, Paperclip, MoreHorizontal, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { BACKEND_URL } from "@/lib/config";
 import { useTheme } from "./ThemeProvider";
 import { jsPDF } from "jspdf";
@@ -12,22 +14,27 @@ interface RankedModel {
     brand: string;
     logo: string;
     description?: string;
+    isPremium?: boolean;
 }
 
 const SORA_CHAMPIONS: RankedModel[] = [
-    {"id": "openai/gpt-4o-mini", "name": "GPT-4o Mini", "brand": "OpenAI", "logo": "/logos/gpt4o_mini.svg", "description": "Fast and intelligent for everyday tasks."},
-    {"id": "nvidia/phi-4", "name": "Phi-4 Multimodal", "brand": "Microsoft", "logo": "/logos/microsoft.svg", "description": "Advanced multimodal reasoning and logic."},
-    {"id": "openai/gpt-4o", "name": "GPT-4o Pro", "brand": "OpenAI", "logo": "/logos/gpt4o_pro.svg", "description": "Flagship intelligence for complex problems."},
-    {"id": "meta-llama/llama-4-scout", "name": "Llama 4 Scout", "brand": "Meta", "logo": "/logos/llama33.svg", "description": "Next-gen open intelligence from Meta."},
-    {"id": "qwen/qwen3-32b", "name": "Qwen 3-32B", "brand": "Qwen", "logo": "/logos/qwen.svg", "description": "Powerful reasoning and coding powerhouse."},
-    {"id": "nvidia/deepseek-v32", "name": "DeepSeek V3.2", "brand": "DeepSeek", "logo": "/logos/deepseek_chat.svg", "description": "Elite efficiency with superior knowledge base."},
-    {"id": "nvidia/falcon3-7b", "name": "Falcon 3-7B", "brand": "TII", "logo": "/logos/falcon.svg", "description": "Sleek and robust for creative outputs."},
-    {"id": "google/gemini-3.1-flash-lite", "name": "Gemini 3.1 Flash Lite", "brand": "Google", "logo": "/logos/gemini_flash.svg", "description": "Lightweight and incredibly fast reasoning."},
-    {"id": "arcee/trinity-large", "name": "Trinity Large", "brand": "Arcee AI", "logo": "/logos/trinity_large.svg", "description": "Domain-specific expertise and large context."},
-    {"id": "minimax/minimax-m2.5", "name": "Minimax M2.5", "brand": "Minimax", "logo": "/logos/minimax.svg", "description": "Hyper-realistic chatting and reasoning."},
-    {"id": "liquid/lfm-2.5", "name": "Liquid LFM", "brand": "Liquid AI", "logo": "/logos/liquid.svg", "description": "Liquid Neural Network pioneer for precision."},
-    {"id": "moonshot/kimi-k2", "name": "Kimi K2", "brand": "Moonshot", "logo": "/logos/moonshot.svg", "description": "Next-level context handling and deep insight."},
-    {"id": "xai/grok-3-mini", "name": "Grok-3 Mini", "brand": "xAI", "logo": "/logos/xai.svg", "description": "Hyper-intelligent and efficient assistant from xAI."}
+    {"id": "openai/gpt-4o-mini", "name": "GPT-4o Mini", "brand": "OpenAI", "logo": "/logos/gpt4o_mini.svg", "description": "Fast and intelligent for everyday tasks.", "isPremium": false},
+    {"id": "nvidia/phi-4", "name": "Phi-4 Multimodal", "brand": "Microsoft", "logo": "/logos/microsoft.svg", "description": "Advanced multimodal reasoning and logic.", "isPremium": false},
+    {"id": "openai/gpt-4o", "name": "GPT-5 Mini", "brand": "OpenAI", "logo": "/logos/gpt4o_pro.svg", "description": "Flagship next-gen intelligence for complex problems.", "isPremium": true},
+    {"id": "meta-llama/llama-4-scout", "name": "Llama 4 Scout", "brand": "Meta", "logo": "/logos/llama33.svg", "description": "Next-gen open intelligence from Meta.", "isPremium": false},
+    {"id": "qwen/qwen3-32b", "name": "Qwen 3-32B", "brand": "Qwen", "logo": "/logos/qwen.svg", "description": "Powerful reasoning and coding powerhouse.", "isPremium": false},
+    {"id": "nvidia/deepseek-v32", "name": "DeepSeek V3.1 Terminus", "brand": "DeepSeek", "logo": "/logos/deepseek_chat.svg", "description": "Elite efficiency with superior knowledge base and reasoning.", "isPremium": false},
+    {"id": "nvidia/falcon3-7b", "name": "Falcon 3-7B", "brand": "TII", "logo": "/logos/falcon.svg", "description": "Sleek and robust for creative outputs.", "isPremium": false},
+    {"id": "google/gemini-3.1-flash-lite", "name": "Gemini 3.1 Flash Lite", "brand": "Google", "logo": "/logos/gemini_flash.svg", "description": "Lightweight and incredibly fast reasoning.", "isPremium": false},
+    {"id": "arcee/trinity-large", "name": "Trinity Large", "brand": "Arcee AI", "logo": "/logos/trinity_large.svg", "description": "Domain-specific expertise and large context.", "isPremium": true},
+    {"id": "huggingface/minimax-m2.7", "name": "MiniMax M2.7", "brand": "MiniMax AI", "logo": "/logos/minimax.svg", "description": "High-fidelity conversational intelligence via Hugging Face.", "isPremium": false},
+    {"id": "liquid/lfm-2.5", "name": "Liquid LFM", "brand": "Liquid AI", "logo": "/logos/liquid.svg", "description": "Liquid Neural Network pioneer for precision.", "isPremium": false},
+    {"id": "huggingface/glm-5.1", "name": "GLM 5.1 Reasoning", "brand": "Z-AI", "logo": "/logos/glm.svg", "description": "Next-gen reasoning and thinking capability via Together/HF.", "isPremium": false},
+    {"id": "moonshot/kimi-k2", "name": "Kimi K2", "brand": "Moonshot", "logo": "/logos/moonshot.svg", "description": "Next-level context handling and deep insight.", "isPremium": false},
+    {"id": "xai/mistral-small", "name": "Cohere Command A", "brand": "Cohere", "logo": "/logos/cohere.svg", "description": "High-performance reasoning and command execution.", "isPremium": true},
+    {"id": "nvidia/mistral-large-3", "name": "Mistral Large 3", "brand": "Mistral AI", "logo": "/logos/mistral.svg", "description": "Mistral's flagship model with elite reasoning and 675B parameters.", "isPremium": true},
+    {"id": "openrouter/nemotron-3-super", "name": "Nemotron-3 Super", "brand": "NVIDIA", "logo": "/logos/nvidia.svg", "description": "NVIDIA's supercharged 120B parameter powerhouse.", "isPremium": true},
+    {"id": "xai/grok-3-mini", "name": "Grok-3 Mini", "brand": "xAI", "logo": "/logos/xai.svg", "description": "Hyper-intelligent and efficient assistant from xAI.", "isPremium": true}
 ];
 
 interface SoraMessage {
@@ -41,9 +48,10 @@ interface SoraMessage {
 
 interface SoraModeProps {
     enabledModels: Record<string, boolean>;
+    isAuthorized: boolean;
 }
 
-export default function SoraMode({ enabledModels = {} }: SoraModeProps) {
+export default function SoraMode({ enabledModels = {}, isAuthorized }: SoraModeProps) {
     const { theme } = useTheme();
     const sessionEmail = "public-user";
     const [messages, setMessages] = useState<SoraMessage[]>([]);
@@ -51,8 +59,12 @@ export default function SoraMode({ enabledModels = {} }: SoraModeProps) {
     const [isGlobalStreaming, setIsGlobalStreaming] = useState(false);
     const [selectedModel, setSelectedModel] = useState<RankedModel>(SORA_CHAMPIONS[0]);
     
-    // Filter available champions based on global settings
-    const availableChampions = SORA_CHAMPIONS.filter(c => enabledModels[c.id] !== false);
+    // Filter available champions based on global settings and Pro status
+    const availableChampions = SORA_CHAMPIONS.filter(c => {
+        const isEnabled = enabledModels[c.id] !== false;
+        const isAllowed = isAuthorized || !c.isPremium;
+        return isEnabled && isAllowed;
+    });
 
     useEffect(() => {
         if (enabledModels && !enabledModels[selectedModel.id]) {
@@ -225,10 +237,45 @@ export default function SoraMode({ enabledModels = {} }: SoraModeProps) {
                                                     Neural link interrupted.
                                                 </div>
                                             ) : (
-                                                <>
-                                                    {msg.content}
-                                                    {msg.isStreaming && <span className="inline-block w-2.5 h-2.5 bg-accent/40 animate-pulse ml-2 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.3)]"></span>}
-                                                </>
+                                                <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm max-w-none`}>
+                                                    {msg.content.includes("<thought>") || msg.content.includes("[Thinking]") || msg.content.includes("[Thought]") ? (
+                                                        <div className="space-y-4">
+                                                            <details className="group bg-panel-border/10 rounded-[1.5rem] overflow-hidden border border-panel-border/30 transition-all hover:bg-panel-border/20">
+                                                                <summary className="flex items-center justify-between px-5 py-3 cursor-pointer list-none">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="p-1.5 bg-accent/20 rounded-lg group-hover:bg-accent/30 transition-colors">
+                                                                            <Sparkles size={12} className="text-accent" />
+                                                                        </div>
+                                                                        <span className="text-[11px] font-black uppercase tracking-widest text-accent">Internal Thinking Process</span>
+                                                                    </div>
+                                                                    <div className="text-accent/40 group-open:rotate-180 transition-transform duration-300">
+                                                                        <ChevronDown size={14} />
+                                                                    </div>
+                                                                </summary>
+                                                                <div className="px-5 pb-5 pt-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                                    <div className="text-[13px] text-foreground/40 font-medium italic leading-relaxed pl-4 border-l-2 border-accent/20 whitespace-pre-wrap">
+                                                                        {(() => {
+                                                                            const thoughtRegex = /(?:<thought>|\[Thinking\]|\[Thought\])([\s\S]*?)(?:<\/thought>|\[\/Thinking\]|\[\/Thought\]|$)/gi;
+                                                                            const matches = Array.from(msg.content.matchAll(thoughtRegex));
+                                                                            return matches.map(m => m[1]).join("").trim() || "Deep reasoning analysis...";
+                                                                        })()}
+                                                                    </div>
+                                                                </div>
+                                                            </details>
+                                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                {msg.content.replace(/(?:<thought>|\[Thinking\]|\[Thought\])[\s\S]*?(?:<\/thought>|\[\/Thinking\]|\[\/Thought\]|$)/gi, "").trim()}
+                                                            </ReactMarkdown>
+                                                            {msg.isStreaming && <span className="inline-block w-2 h-2 bg-accent/40 animate-pulse rounded-full"></span>}
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                {msg.content}
+                                                            </ReactMarkdown>
+                                                            {msg.isStreaming && <span className="inline-block w-2 h-2 bg-accent/40 animate-pulse rounded-full"></span>}
+                                                        </>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     </div>

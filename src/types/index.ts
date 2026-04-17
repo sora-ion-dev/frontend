@@ -35,23 +35,24 @@ export const FIESTA_BRAND_IDS = [
     "nvidia/phi-4",
     "google/gemini-3.1-flash-lite",
     "arcee/trinity-large",
-    "minimax/minimax-m2.5",
+    "huggingface/minimax-m2.7",
     "liquid/lfm-2.5",
-    "nvidia/glm4-7",
+    "huggingface/glm-5.1",
     "nvidia/deepseek-v32",
-    "xai/mistral-small"
+    "nvidia/mistral-large-3",
+    "openrouter/nemotron-3-super"
 ];
 
 export const IMAGE_FIESTA_BRAND_IDS = [
     "black-forest-labs/FLUX.1-schnell",
     "Qwen/Qwen-Image",
     "tencent/HunyuanImage-3.0",
-    "ByteDance/SDXL-Lightning"
+    "baidu/ERNIE-Image-Turbo"
 ];
 
 export const MODEL_BRANDS: AIBrand[] = [
     { id: "openai/gpt-4o-mini", brandId: "openai/gpt-4o-mini", name: "GPT-4o Mini", brandName: "GPT-4o Mini", brand: "OpenAI", realBrandName: "OpenAI", logo: "/logos/gpt4o_mini.svg", color: "#74aa9c", description: "Fast and reliable lightweight model", models: [{ id: "openai/gpt-4o-mini", name: "GPT-4o Mini" }] },
-    { id: "openai/gpt-4o", brandId: "openai/gpt-4o", name: "GPT-4o Pro", brandName: "GPT-4o Pro", brand: "OpenAI", realBrandName: "OpenAI", logo: "/logos/gpt4o_pro.svg", color: "#D4AF37", description: "The most intelligent Pro model", models: [{ id: "openai/gpt-4o", name: "GPT-4o Pro" }] },
+    { id: "openai/gpt-4o", brandId: "openai/gpt-4o", name: "GPT-5 Mini", brandName: "GPT-5 Mini", brand: "OpenAI", realBrandName: "OpenAI", logo: "/logos/gpt4o_pro.svg", color: "#D4AF37", description: "The next generation flagship intelligence", models: [{ id: "openai/gpt-4o", name: "GPT-5 Mini" }] },
     { id: "meta-llama/llama-4-scout", brandId: "meta-llama/llama-4-scout", name: "Llama 4 Scout", brandName: "Llama 4 Scout", brand: "Meta", realBrandName: "Meta", logo: "/logos/llama33.svg", color: "#0668E1", description: "Next-gen Llama scout model", models: [{ id: "meta-llama/llama-4-scout", name: "Llama 4 Scout" }] },
     { id: "qwen/qwen3-32b", brandId: "qwen/qwen3-32b", name: "Qwen 3-32B", brandName: "Qwen 3-32B", brand: "Qwen", realBrandName: "Qwen", logo: "/logos/qwen.svg", color: "#A855F7", description: "Powerful Qwen 3 performance", models: [{ id: "qwen/qwen3-32b", name: "Qwen 3-32B" }] },
     { id: "moonshot/kimi-k2", brandId: "moonshot/kimi-k2", name: "Kimi K2", brandName: "Kimi K2", brand: "Moonshot", realBrandName: "Moonshot", logo: "/logos/moonshot.svg", color: "#FFB74D", description: "Intelligent Kimi K2 assistant", models: [{ id: "moonshot/kimi-k2", name: "Kimi K2" }] },
@@ -61,11 +62,15 @@ export const MODEL_BRANDS: AIBrand[] = [
     { id: "minimax/minimax-m2.5", brandId: "minimax/minimax-m2.5", name: "Minimax M2.5", brandName: "Minimax M2.5", brand: "Minimax", realBrandName: "Minimax", logo: "/logos/minimax.svg", color: "#45B7D1", description: "Minimax M2.5 efficiency", models: [{ id: "minimax/minimax-m2.5", name: "Minimax M2.5" }] },
     { id: "liquid/lfm-2.5", brandId: "liquid/lfm-2.5", name: "Liquid LFM", brandName: "Liquid LFM", brand: "Liquid AI", realBrandName: "Liquid", logo: "/logos/liquid.svg", color: "#95A5A6", description: "Liquid LFM performance", models: [{ id: "liquid/lfm-2.5", name: "Liquid LFM" }] },
     { id: "nvidia/glm4-7", brandId: "nvidia/glm4-7", name: "GLM 4.7 Reasoning", brandName: "GLM 4.7 Reasoning", brand: "Z-AI", realBrandName: "Z-AI", logo: "/logos/glm.svg", color: "#F39C12", description: "GLM 4.7 reasoning with thinking tokens", models: [{ id: "nvidia/glm4-7", name: "GLM 4.7 Reasoning" }] },
-    { id: "nvidia/deepseek-v32", brandId: "nvidia/deepseek-v32", name: "DeepSeek V3.2", brandName: "DeepSeek V3.2", brand: "DeepSeek", realBrandName: "DeepSeek", logo: "/logos/deepseek_chat.svg", color: "#00E0FF", description: "State-of-the-art reasoning LLM", models: [{ id: "nvidia/deepseek-v32", name: "DeepSeek V3.2" }] },
-    { id: "xai/mistral-small", brandId: "xai/mistral-small", name: "Cohere Command R", brandName: "Cohere Command R", brand: "Cohere", realBrandName: "Cohere", logo: "/logos/cohere.svg", color: "#E0E0E0", description: "High-performance R series from Cohere via GitHub", models: [{ id: "xai/mistral-small", name: "Cohere Command R" }] },
+    { id: "nvidia/deepseek-v32", brandId: "nvidia/deepseek-v32", name: "DeepSeek V3", brandName: "DeepSeek V3", brand: "DeepSeek", realBrandName: "DeepSeek", logo: "/logos/deepseek_chat.svg", color: "#00E0FF", description: "Elite efficiency with superior reasoning capabilities", models: [{ id: "nvidia/deepseek-v32", name: "DeepSeek V3" }] },
+    { id: "nvidia/mistral-large-3", brandId: "nvidia/mistral-large-3", name: "Mistral Large 3", brandName: "Mistral Large 3", brand: "Mistral", realBrandName: "Mistral AI", logo: "/logos/mistral.svg", color: "#F39C12", description: "Mistral's largest and most capable model with 675B parameters", models: [{ id: "nvidia/mistral-large-3", name: "Mistral Large 3" }] },
+    { id: "openrouter/nemotron-3-super", brandId: "openrouter/nemotron-3-super", name: "Nemotron-3 Super", brandName: "Nemotron-3 Super", brand: "NVIDIA", realBrandName: "NVIDIA", logo: "/logos/nvidia.svg", color: "#76B900", description: "NVIDIA's supercharged Nemotron model with 120B parameters", models: [{ id: "openrouter/nemotron-3-super", name: "Nemotron-3 Super" }] },
     // Image Fiesta Models (Consolidated 4)
     { id: "black-forest-labs/FLUX.1-schnell", brandId: "black-forest-labs/FLUX.1-schnell", name: "FLUX.1-schnell", brandName: "FLUX.1-schnell", brand: "BFL", realBrandName: "Black Forest Labs", logo: "/logos/bfl.svg", color: "#F39C12", description: "Top-tier realistic image generation", models: [{ id: "black-forest-labs/FLUX.1-schnell", name: "FLUX.1-schnell" }] },
     { id: "Qwen/Qwen-Image", brandId: "Qwen/Qwen-Image", name: "Qwen-Image", brandName: "Qwen-Image", brand: "Qwen", realBrandName: "Qwen", logo: "/logos/qwen.svg", color: "#A855F7", description: "Alibaba's visual foundational model", models: [{ id: "Qwen/Qwen-Image", name: "Qwen-Image" }] },
     { id: "tencent/HunyuanImage-3.0", brandId: "tencent/HunyuanImage-3.0", name: "Hunyuan 3.0", brandName: "Hunyuan 3.0", brand: "Tencent", realBrandName: "Tencent", logo: "/logos/tencent.svg", color: "#00E0FF", description: "Tencent's next-gen high-fidelity synthesis", models: [{ id: "tencent/HunyuanImage-3.0", name: "HunyuanImage-3.0" }] },
-    { id: "ByteDance/SDXL-Lightning", brandId: "ByteDance/SDXL-Lightning", name: "SDXL Lightning", brandName: "SDXL Lightning", brand: "ByteDance", realBrandName: "ByteDance", logo: "/logos/bytedance.svg", color: "#00E0FF", description: "Ultra-fast SDXL-based high-fidelity generation from ByteDance", models: [{ id: "ByteDance/SDXL-Lightning", name: "SDXL Lightning" }] }
+    { id: "ByteDance/SDXL-Lightning", brandId: "ByteDance/SDXL-Lightning", name: "SDXL Lightning", brandName: "SDXL Lightning", brand: "ByteDance", realBrandName: "ByteDance", logo: "/logos/bytedance.svg", color: "#00E0FF", description: "Ultra-fast SDXL-based high-fidelity generation from ByteDance", models: [{ id: "ByteDance/SDXL-Lightning", name: "SDXL Lightning" }] },
+    { id: "huggingface/minimax-m2.7", brandId: "huggingface/minimax-m2.7", name: "MiniMax M2.7", brandName: "MiniMax M2.7", brand: "MiniMax", realBrandName: "MiniMax AI", logo: "/logos/minimax.svg", color: "#45B7D1", description: "Next-gen M2.7 intelligence via Hugging Face", models: [{ id: "huggingface/minimax-m2.7", name: "MiniMax M2.7" }] },
+    { id: "huggingface/glm-5.1", brandId: "huggingface/glm-5.1", name: "GLM 5.1 Reasoning", brandName: "GLM 5.1 Reasoning", brand: "Z-AI", realBrandName: "Z-AI", logo: "/logos/glm.svg", color: "#F39C12", description: "Ultra-high reasoning GLM 5.1 via Hugging Face Together", models: [{ id: "huggingface/glm-5.1", name: "GLM 5.1 Reasoning" }] },
+    { id: "baidu/ERNIE-Image-Turbo", brandId: "baidu/ERNIE-Image-Turbo", name: "ERNIE Image Turbo", brandName: "ERNIE Image Turbo", brand: "Baidu", realBrandName: "Baidu AI", logo: "/logos/baidu.svg", color: "#2979FF", description: "Baidu's lightning-fast high-fidelity image generator", models: [{ id: "baidu/ERNIE-Image-Turbo", name: "ERNIE Image Turbo" }] }
 ];
