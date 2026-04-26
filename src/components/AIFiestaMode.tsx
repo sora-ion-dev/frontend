@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Trophy, Send, RotateCcw, Brain, Zap, Swords, Merge, Loader2, Plus, Mic, Image as ImageIcon, Lock as LockIcon } from "lucide-react";
+import { Sparkles, Trophy, Send, RotateCcw, Brain, Zap, Swords, Merge, Loader2, Plus, Mic, Lock as LockIcon } from "lucide-react";
 import { AIBrand, ChatMessage } from "@/types";
 import { MODEL_BRANDS, FIESTA_BRAND_IDS } from "@/types";
 import AIColumn from "./AIColumn";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Loader2, Image as ImageIcon, X, Copy, Check, Wand2, Zap, Download, ChevronDown, Monitor, Cpu, Plus, Mic, Send } from "lucide-react";
+import { Sparkles, Loader2, X, Copy, Check, Wand2, Zap, Download, ChevronDown, Monitor, Cpu, Plus, Mic, Send } from "lucide-react";
 import { BACKEND_URL } from "@/lib/config";
 import { useTheme } from "./ThemeProvider";
 import jsPDF from "jspdf";

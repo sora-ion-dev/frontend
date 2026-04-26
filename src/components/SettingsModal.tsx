@@ -8,7 +8,7 @@ import {
     Smartphone, Moon, Sun, AlertTriangle, Menu
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
-import { MODEL_BRANDS, IMAGE_FIESTA_BRAND_IDS } from "@/types";
+import { MODEL_BRANDS } from "@/types";
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -30,7 +30,6 @@ export default function SettingsModal({ isOpen, onClose, userStatus, sessionImag
 
     // Enabled Models State (Local)
     const [enabledModels, setEnabledModels] = useState<Record<string, boolean>>({});
-    const [enabledImageModels, setEnabledImageModels] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         // Load AI Settings
@@ -48,25 +47,12 @@ export default function SettingsModal({ isOpen, onClose, userStatus, sessionImag
             setEnabledModels(initial);
         }
 
-        const savedImgModels = localStorage.getItem("superai_enabled_image_models");
-        if (savedImgModels) setEnabledImageModels(JSON.parse(savedImgModels));
-        else {
-            const initial: Record<string, boolean> = {};
-            IMAGE_FIESTA_BRAND_IDS.forEach(id => initial[id] = true);
-            setEnabledImageModels(initial);
-        }
     }, [isOpen]);
 
-    const toggleModel = (id: string, isImage: boolean = false) => {
-        if (isImage) {
-            const next = { ...enabledImageModels, [id]: !enabledImageModels[id] };
-            setEnabledImageModels(next);
-            localStorage.setItem("superai_enabled_image_models", JSON.stringify(next));
-        } else {
-            const next = { ...enabledModels, [id]: !enabledModels[id] };
-            setEnabledModels(next);
-            localStorage.setItem("superai_enabled_models", JSON.stringify(next));
-        }
+    const toggleModel = (id: string) => {
+        const next = { ...enabledModels, [id]: !enabledModels[id] };
+        setEnabledModels(next);
+        localStorage.setItem("superai_enabled_models", JSON.stringify(next));
         window.dispatchEvent(new Event("settingsChanged"));
     };
 
@@ -76,17 +62,6 @@ export default function SettingsModal({ isOpen, onClose, userStatus, sessionImag
         window.dispatchEvent(new Event("settingsChanged"));
     };
 
-    const downloadAllImages = () => {
-        if (sessionImages.length === 0) return;
-        sessionImages.forEach((img, index) => {
-            const link = document.createElement("a");
-            link.href = img.url || img; // Handle both object and string
-            link.download = `superai-session-img-${index + 1}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-    };
 
     if (!isOpen) return null;
 
@@ -99,7 +74,6 @@ export default function SettingsModal({ isOpen, onClose, userStatus, sessionImag
         { id: "general", label: "General", icon: Smartphone },
         { id: "models", label: "Models", icon: Layers },
         { id: "advanced", label: "Advanced", icon: Zap },
-        { id: "history", label: "History", icon: Download },
     ];
 
     return (
@@ -261,25 +235,6 @@ export default function SettingsModal({ isOpen, onClose, userStatus, sessionImag
                         </div>
                     )}
 
-                    {activeTab === "history" && (
-                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="p-6 bg-foreground/5 rounded-[2rem] border border-panel-border flex flex-col items-center text-center shadow-lg">
-                                <div className="w-12 h-12 bg-accent/20 rounded-full flex items-center justify-center text-accent mb-3">
-                                    <Sparkles size={24} />
-                                </div>
-                                <h4 className="text-2xl font-black text-foreground mb-1">{sessionImages.length}</h4>
-                                <p className="text-[10px] text-foreground/30 font-bold mb-4 uppercase tracking-tighter">Session Syntheses</p>
-                                
-                                <button 
-                                    disabled={sessionImages.length === 0}
-                                    onClick={downloadAllImages}
-                                    className="w-full py-3 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-white transition-all disabled:opacity-20"
-                                >
-                                    Export All
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* Footer */}

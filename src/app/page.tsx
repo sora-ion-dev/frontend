@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain, Zap, Send, Image as ImageIcon, Plus, Lock as LockIcon } from "lucide-react";
+import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain, Zap, Send, Plus, Lock as LockIcon } from "lucide-react";
 import { AIBrand, ChatMessage, MODEL_BRANDS, FIESTA_BRAND_IDS } from "@/types";
 import { BACKEND_URL } from "@/lib/config";
 import AIColumn from "@/components/AIColumn";
@@ -10,9 +10,7 @@ import PromptMode from "@/components/PromptMode";
 import PlaySora from "@/components/PlaySora";
 import AIFiestaMode from "@/components/AIFiestaMode";
 import SettingsModal from "@/components/SettingsModal";
-import ImageFiestaMode from "@/components/ImageFiestaMode";
 import SuperSearchMode from "@/components/SuperSearchMode";
-import { IMAGE_FIESTA_BRAND_IDS } from "@/types";
 import AccessGate from "@/components/AccessGate";
 
 const AUTHORIZATION_KEY = "2103";
@@ -32,7 +30,7 @@ export default function Home() {
   const [rankings, setRankings] = useState<string[]>([]);
   const [personality, setPersonality] = useState("Professional");
   const [webSearch, setWebSearch] = useState(false);
-  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "play_sora" | "image_fiesta" | "super_search">("superfiesta");
+  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "play_sora" | "super_search">("superfiesta");
   
   const [isAuthorized, setIsAuthorized] = useState<boolean>(true);
   const [messageCount, setMessageCount] = useState(0);
@@ -120,32 +118,8 @@ export default function Home() {
     return initial;
   });
 
-  const [imageFiestaResults, setImageFiestaResults] = useState<Record<string, any[]>>(() => {
-    const initial: Record<string, any[]> = {};
-    IMAGE_FIESTA_BRAND_IDS.forEach(id => (initial[id] = []));
-    return initial;
-  });
-  const [isImageGenerating, setIsImageGenerating] = useState(false);
-  const [enabledImageModels, setEnabledImageModels] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    const syncImageModels = () => {
-      const saved = localStorage.getItem("superai_enabled_image_models");
-      if (saved) {
-        setEnabledImageModels(JSON.parse(saved));
-      } else {
-        const initial: Record<string, boolean> = {};
-        IMAGE_FIESTA_BRAND_IDS.forEach(id => (initial[id] = true));
-        setEnabledImageModels(initial);
-      }
-    };
-    syncImageModels();
-    window.addEventListener("settingsChanged", syncImageModels);
-    return () => window.removeEventListener("settingsChanged", syncImageModels);
-  }, []);
-
   const toggleImageModelEnabled = (brandId: string) => {
-    setEnabledImageModels(prev => ({ ...prev, [brandId]: !prev[brandId] }));
+    // Logic removed
   };
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -264,62 +238,7 @@ export default function Home() {
   };
 
   const handleImageFiestaGenerate = async (userPrompt: string) => {
-    if (!userPrompt.trim() || isImageGenerating) return;
-    setIsImageGenerating(true);
-
-    try {
-      // Parallel generation calling our backend (HF/OR Inference)
-      let activeModelIds = IMAGE_FIESTA_BRAND_IDS.filter(id => enabledImageModels[id]);
-      
-      // RESTRICTION: Only 2 models for free users
-      if (!isAuthorized) {
-        activeModelIds = activeModelIds.slice(0, 2);
-      }
-
-      const generationPromises = activeModelIds.map(async (modelId) => {
-        try {
-          const res = await fetch(`${BACKEND_URL}/chat/image-generate`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              prompt: userPrompt,
-              model_id: modelId,
-              user_email: session?.user?.email || "unknown"
-            })
-          });
-
-          if (!res.ok) {
-            const errData = await res.json();
-             throw new Error(errData.detail || "Generation failed");
-          }
-
-          const data = await res.json();
-          const imageUrl = data.image; // Base64 or URL
-
-          const result = {
-            id: Math.random().toString(36).substring(7),
-            url: imageUrl,
-            prompt: userPrompt,
-            timestamp: Date.now()
-          };
-
-          setImageFiestaResults(prev => ({
-            ...prev,
-            [modelId]: [result, ...prev[modelId]]
-          }));
-        } catch (err) {
-          console.error(`Generation failed for ${modelId}`, err);
-        }
-      });
-
-      await Promise.all(generationPromises);
-    } catch (error) {
-      console.error("Global image generation failure", error);
-    } finally {
-      setIsImageGenerating(false);
-    }
+    // Function removed
   };
 
   const handleSendPrompt = async (customPrompt?: string, targetModels?: string[]) => {
@@ -634,20 +553,6 @@ export default function Home() {
             </div>
           </button>
 
-          <button
-            onClick={() => setActiveTab("image_fiesta")}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${activeTab === "image_fiesta" ? "bg-accent/10 border border-accent/20 text-accent shadow-lg shadow-accent/5" : "text-foreground/40 hover:bg-foreground/5 hover:text-foreground"}`}
-          >
-            <div className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${activeTab === "image_fiesta" ? "bg-accent/20" : "bg-foreground/5"}`}>
-              <ImageIcon className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col items-start">
-              <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                Image Mode
-              </span>
-              <span className="text-[9px] font-medium opacity-50">Unlimited Synthesis</span>
-            </div>
-          </button>
 
           <button
             onClick={() => setActiveTab("prompt_ai")}
@@ -740,7 +645,7 @@ export default function Home() {
 
         {/* Header */}
         {/* Header - Hidden in SuperFiesta & Sora as per user request */}
-        {activeTab !== "superfiesta" && activeTab !== "sora" && activeTab !== "image_fiesta" && activeTab !== "prompt_ai" && activeTab !== "super_search" && (
+        {activeTab !== "superfiesta" && activeTab !== "sora" && activeTab !== "prompt_ai" && activeTab !== "super_search" && (
           <header className="h-16 flex items-center justify-between px-6 border-b border-panel-border z-40 bg-background/80 backdrop-blur-xl shrink-0">
 
           <div className="flex items-center gap-4">
@@ -789,18 +694,7 @@ export default function Home() {
               isAuthorized={!!isAuthorized}
             />
           )}
-          {activeTab === "image_fiesta" && (
-            <div className="h-full animate-in fade-in duration-700">
-               <ImageFiestaMode 
-                  onGenerate={handleImageFiestaGenerate}
-                  results={imageFiestaResults}
-                  isGenerating={isImageGenerating}
-                  enabledImageModels={enabledImageModels}
-                  onToggleEnabled={toggleImageModelEnabled}
-                  isAuthorized={!!isAuthorized}
-               />
-            </div>
-          )}
+          {activeTab === "play_sora" && <PlaySora />}
           {activeTab === "prompt_ai" && <PromptMode />}
           {activeTab === "super_search" && <SuperSearchMode />}
         </section>
@@ -810,7 +704,6 @@ export default function Home() {
             isOpen={isSettingsOpen} 
             onClose={() => setIsSettingsOpen(false)} 
             userStatus={userStatus}
-            sessionImages={Object.values(imageFiestaResults).flat()}
           />
         )}
       </main>

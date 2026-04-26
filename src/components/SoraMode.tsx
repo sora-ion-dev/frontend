@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Image as ImageIcon, Crown, AlertCircle, ChevronUp, ChevronDown, Paperclip, MoreHorizontal, Sparkles } from "lucide-react";
+import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Crown, AlertCircle, ChevronUp, ChevronDown, MoreHorizontal, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { BACKEND_URL } from "@/lib/config";
@@ -41,7 +41,6 @@ interface SoraMessage {
     id: string;
     role: "user" | "assistant";
     content: string;
-    image?: string;
     isStreaming?: boolean;
     error?: boolean;
 }
@@ -74,7 +73,6 @@ export default function SoraMode({ enabledModels = {}, isAuthorized }: SoraModeP
     }, [enabledModels, selectedModel.id, availableChampions]);
 
     const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-    const [image, setImage] = useState<string | null>(null);
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const selectorRef = useRef<HTMLDivElement>(null);
@@ -108,7 +106,6 @@ export default function SoraMode({ enabledModels = {}, isAuthorized }: SoraModeP
                 body: JSON.stringify({
                     prompt: userPrompt,
                     models: [modelId],
-                    image: image,
                     personality: "normal",
                     user_email: sessionEmail
                 })
@@ -179,8 +176,6 @@ export default function SoraMode({ enabledModels = {}, isAuthorized }: SoraModeP
             { id: userMsgId, role: "user", content: currentPrompt },
             { id: assistantMsgId, role: "assistant", content: "", isStreaming: true }
         ]);
-
-        setImage(null);
         await streamAnswer(assistantMsgId, selectedModel.id, currentPrompt);
     };
 
@@ -383,16 +378,6 @@ export default function SoraMode({ enabledModels = {}, isAuthorized }: SoraModeP
                         </div>
                     )}
 
-                    {image && (
-                        <div className="relative w-28 h-28 rounded-3xl overflow-hidden border-2 border-accent/50 shadow-2xl group ml-6 animate-in zoom-in duration-300">
-                            <img src={image} className="w-full h-full object-cover" alt="Visual Context" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button onClick={() => setImage(null)} className="bg-white/20 backdrop-blur-md text-white rounded-full p-2 hover:bg-white/30 transition-colors">
-                                    <Plus className="rotate-45" size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
                     
                     <div className={`w-full relative flex items-center gap-3 px-6 py-2.5 rounded-[2rem] border border-panel-border bg-foreground/5 backdrop-blur-3xl transition-all duration-500 shadow-xl focus-within:border-accent/30`}>
                         <button 
