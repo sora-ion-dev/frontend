@@ -1,224 +1,280 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Mic, Send, Zap, Shield, Sparkles, Activity, Volume2, Maximize2, Info } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mic, MicOff, X, Zap, Sparkles, Volume2, Settings2, History, MessageSquare, ShieldCheck, Globe } from "lucide-react";
 import { BACKEND_URL } from "@/lib/config";
-import { ChatMessage } from "@/types";
+
+// --- HELPERS ---
+const useAudioVisualizer = (isListening: boolean, isSpeaking: boolean) => {
+    const [volume, setVolume] = useState(0);
+    
+    useEffect(() => {
+        if (!isListening && !isSpeaking) {
+            setVolume(0);
+            return;
+        }
+
+        const interval = setInterval(() => {
+            // Simulate volume fluctuations for the orb
+            setVolume(Math.random() * 100);
+        }, 100);
+
+        return () => clearInterval(interval);
+    }, [isListening, isSpeaking]);
+
+    return volume;
+};
 
 export default function LiveMode() {
-  const [prompt, setPrompt] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+    const [mode, setMode] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
+    const [transcript, setTranscript] = useState("");
+    const [aiResponse, setAiResponse] = useState("");
+    const [history, setHistory] = useState<{role: string, text: string}[]>([]);
+    const [isMuted, setIsMuted] = useState(false);
+    
+    const volume = useAudioVisualizer(mode === "listening", mode === "speaking");
+    const recognitionRef = useRef<any>(null);
 
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+    // Initialize Speech Recognition
+    useEffect(() => {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = false;
+            recognitionRef.current.interimResults = true;
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!prompt.trim() || isStreaming) return;
-
-    const userMsg: ChatMessage = { id: Date.now().toString(), role: "user", content: prompt };
-    const assistantMsgId = `live-${Date.now()}`;
-    const assistantMsg: ChatMessage = { id: assistantMsgId, role: "assistant", content: "", isStreaming: true };
-
-    setMessages(prev => [...prev, userMsg, assistantMsg]);
-    setPrompt("");
-    setIsStreaming(true);
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/chat/stream`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: userMsg.content,
-          models: ["google/gemini-3.1-flash-live"],
-          user_email: "public-user",
-          personality: "normal"
-        })
-      });
-
-      if (!res.ok) throw new Error("Connection failed");
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n\n");
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.substring(6));
-                if (data.chunk) {
-                  fullText += data.chunk;
-                  setMessages(prev => {
-                    const next = [...prev];
-                    const idx = next.findIndex(m => m.id === assistantMsgId);
-                    if (idx !== -1) {
-                      next[idx] = { ...next[idx], content: fullText };
-                    }
-                    return next;
-                  });
+            recognitionRef.current.onresult = (event: any) => {
+                const current = event.results[event.results.length - 1][0].transcript;
+                setTranscript(current);
+                if (event.results[event.results.length - 1].isFinal) {
+                    handleUserQuery(current);
                 }
-              } catch (e) {}
+            };
+
+            recognitionRef.current.onend = () => {
+                if (mode === "listening") {
+                    setMode("thinking");
+                }
+            };
+        }
+    }, [mode]);
+
+    const startListening = () => {
+        setTranscript("");
+        setAiResponse("");
+        setMode("listening");
+        recognitionRef.current?.start();
+    };
+
+    const stopListening = () => {
+        setMode("idle");
+        recognitionRef.current?.stop();
+    };
+
+    const handleUserQuery = async (query: string) => {
+        if (!query.trim()) return;
+        
+        setMode("thinking");
+        try {
+            const res = await fetch(`${BACKEND_URL}/chat/stream`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    prompt: query,
+                    models: ["google/gemini-3.1-flash-live"],
+                    user_email: "public-user",
+                    personality: "normal"
+                })
+            });
+
+            if (!res.ok) throw new Error("Connection failed");
+            
+            const reader = res.body?.getReader();
+            const decoder = new TextDecoder();
+            let fullText = "";
+            setMode("speaking");
+
+            if (reader) {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split("\n\n");
+                    for (const line of lines) {
+                        if (line.startsWith("data: ")) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                if (data.chunk) {
+                                    fullText += data.chunk;
+                                    setAiResponse(fullText);
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                }
             }
-          }
+            
+            // Speak the response
+            speak(fullText);
+            setHistory(prev => [...prev, {role: "user", text: query}, {role: "assistant", text: fullText}]);
+            
+        } catch (e) {
+            setAiResponse("Connection lost. Retrying neural link...");
+            setMode("idle");
         }
-      }
-    } catch (e) {
-      setMessages(prev => {
-        const next = [...prev];
-        const idx = next.findIndex(m => m.id === assistantMsgId);
-        if (idx !== -1) {
-          next[idx] = { ...next[idx], content: "Live connection lost. Please try again.", isStreaming: false };
+    };
+
+    const speak = (text: string) => {
+        if (isMuted) return;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.1;
+        utterance.pitch = 1.0;
+        utterance.onend = () => setMode("idle");
+        window.speechSynthesis.speak(utterance);
+    };
+
+    const orbColors = useMemo(() => {
+        switch (mode) {
+            case "listening": return "from-blue-400 via-cyan-400 to-blue-600";
+            case "thinking": return "from-purple-500 via-fuchsia-500 to-indigo-600 animate-pulse";
+            case "speaking": return "from-emerald-400 via-teal-400 to-blue-500";
+            default: return "from-gray-800 via-gray-900 to-black";
         }
-        return next;
-      });
-    } finally {
-      setIsStreaming(false);
-      setMessages(prev => {
-        const next = [...prev];
-        const idx = next.findIndex(m => m.id === assistantMsgId);
-        if (idx !== -1) {
-            next[idx] = { ...next[idx], isStreaming: false };
-        }
-        return next;
-      });
-    }
-  };
+    }, [mode]);
 
-  return (
-    <div className="flex flex-col h-full bg-[#050505] text-white relative overflow-hidden">
-      {/* Background Glows */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full -translate-y-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full translate-y-1/2 pointer-events-none" />
-
-      {/* Header */}
-      <div className="h-16 flex items-center justify-between px-8 border-b border-white/5 backdrop-blur-md bg-black/40 z-10">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
-            <div className="absolute inset-0 w-3 h-3 bg-red-500 rounded-full animate-ping opacity-75" />
-          </div>
-          <h2 className="text-sm font-black tracking-[0.2em] uppercase">Gemini 3.1 Live</h2>
-        </div>
-        <div className="flex items-center gap-6 text-white/40">
-            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                <Shield size={14} className="text-green-400" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Secure Node</span>
-            </div>
-            <Activity size={18} className="hover:text-blue-400 transition-colors cursor-pointer" />
-            <Maximize2 size={18} className="hover:text-purple-400 transition-colors cursor-pointer" />
-        </div>
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-            <div className="w-24 h-24 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/20 group hover:scale-110 transition-transform duration-500 cursor-pointer">
-              <Zap size={40} className="text-white fill-white group-hover:animate-bounce" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-3xl font-black tracking-tight bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent">READY FOR LIVE INPUT</h3>
-              <p className="text-white/40 text-sm font-medium tracking-wide">Ultra-low latency reasoning powered by Gemini 3.1 Flash Live</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 max-w-md w-full pt-8">
-                {["System Analysis", "Real-time Coding", "Deep Research", "Live Strategy"].map(t => (
-                    <button key={t} onClick={() => setPrompt(t)} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-white/10 hover:border-blue-500/50 transition-all text-left">
-                        {t}
+    return (
+        <div className="fixed inset-0 z-[100] bg-black text-white flex flex-col font-sans overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-black to-black pointer-events-none" />
+            
+            {/* Header */}
+            <header className="relative z-10 p-8 flex items-center justify-between backdrop-blur-md bg-black/20">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl">
+                        <div className={`w-2 h-2 rounded-full ${mode !== "idle" ? "bg-red-500 animate-pulse" : "bg-white/20"}`} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Neural Link: Active</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl">
+                        <Globe size={14} className="text-blue-400" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Region: IAD-1</span>
+                    </div>
+                </div>
+                
+                <div className="flex items-center gap-6">
+                    <button className="text-white/40 hover:text-white transition-colors"><Settings2 size={20}/></button>
+                    <button className="text-white/40 hover:text-white transition-colors"><History size={20}/></button>
+                    <button className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-all border border-white/10" onClick={() => window.location.reload()}>
+                        <X size={20} />
                     </button>
-                ))}
-            </div>
-          </div>
-        ) : (
-          messages.map((m, i) => (
-            <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
-              <div className={`max-w-[80%] p-6 rounded-3xl ${m.role === "user" ? "bg-blue-600 text-white shadow-xl shadow-blue-600/10" : "bg-white/5 border border-white/10 backdrop-blur-xl"}`}>
-                <div className="flex items-center gap-3 mb-3 opacity-40">
-                    {m.role === "assistant" ? <Sparkles size={14} /> : <Zap size={14} />}
-                    <span className="text-[10px] font-black uppercase tracking-widest">{m.role === "assistant" ? "Super AI Live" : "Command Input"}</span>
                 </div>
-                <div className="text-sm font-medium leading-relaxed tracking-wide whitespace-pre-wrap">
-                  {m.content}
-                  {m.isStreaming && <span className="inline-block w-1.5 h-4 bg-blue-400 ml-1 animate-pulse" />}
+            </header>
+
+            {/* Main Immersive Space */}
+            <main className="flex-1 flex flex-col items-center justify-center relative px-8">
+                
+                {/* Central Orb */}
+                <div className="relative flex items-center justify-center w-full h-full max-h-[600px]">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={mode}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            transition={{ duration: 0.5, ease: "circOut" }}
+                            className="relative flex items-center justify-center"
+                        >
+                            {/* Layered Glows */}
+                            <div className={`absolute w-[400px] h-[400px] rounded-full bg-gradient-to-tr ${orbColors} blur-[80px] opacity-40 animate-slow-pan`} />
+                            <div className={`absolute w-[300px] h-[300px] rounded-full bg-gradient-to-br ${orbColors} blur-[40px] opacity-60`} />
+                            
+                            {/* The Real Orb */}
+                            <motion.div 
+                                animate={{ 
+                                    scale: 1 + (volume / 200),
+                                    rotate: mode === "thinking" ? 360 : 0
+                                }}
+                                transition={{ 
+                                    rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                                    scale: { duration: 0.1 }
+                                }}
+                                className={`w-64 h-64 rounded-full bg-gradient-to-tr ${orbColors} shadow-[0_0_100px_rgba(59,130,246,0.5)] border border-white/20 relative z-10 flex items-center justify-center overflow-hidden`}
+                            >
+                                <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px]" />
+                                <div className="relative z-20">
+                                    {mode === "idle" && <Zap size={60} className="text-white/20 fill-white/10" />}
+                                    {mode === "thinking" && <Sparkles size={60} className="text-white animate-pulse" />}
+                                    {mode === "listening" && <div className="flex gap-2">
+                                        {[1,2,3].map(i => <motion.div key={i} animate={{ height: [10, 40, 10] }} transition={{ repeat: Infinity, duration: 0.5, delay: i*0.1 }} className="w-2 bg-white rounded-full" />)}
+                                    </div>}
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    </AnimatePresence>
+
+                    {/* Captions / Subtitles Overlay */}
+                    <div className="absolute bottom-10 left-0 right-0 text-center max-w-2xl mx-auto space-y-4">
+                        <AnimatePresence>
+                            {transcript && (
+                                <motion.p 
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: -20, opacity: 0 }}
+                                    className="text-xl font-medium text-white/60 tracking-tight italic"
+                                >
+                                    "{transcript}"
+                                </motion.p>
+                            )}
+                            {aiResponse && (
+                                <motion.p 
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    className="text-2xl font-bold text-white tracking-tight leading-snug"
+                                >
+                                    {aiResponse}
+                                </motion.p>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
-              </div>
-            </div>
-          ))
-        )}
-        <div ref={chatEndRef} />
-      </div>
+            </main>
 
-      {/* Live Waveform (Always visible at bottom when active) */}
-      <div className={`h-16 flex items-center justify-center gap-1 transition-opacity duration-500 ${isStreaming || isListening ? "opacity-100" : "opacity-20"}`}>
-        {[...Array(20)].map((_, i) => (
-          <div 
-            key={i} 
-            className="w-1 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full"
-            style={{ 
-              height: `${Math.random() * (isStreaming || isListening ? 40 : 10) + 5}px`,
-              animation: isStreaming || isListening ? `wave 1s ease-in-out infinite ${i * 0.05}s` : "none"
-            }}
-          />
-        ))}
-      </div>
+            {/* Bottom Controls */}
+            <footer className="relative z-10 p-12 flex flex-col items-center gap-8">
+                <div className="flex items-center gap-12">
+                    <button className={`p-4 rounded-full transition-all border border-white/10 ${isMuted ? "bg-red-500/20 text-red-500" : "bg-white/5 text-white/60 hover:text-white"}`} onClick={() => setIsMuted(!isMuted)}>
+                        {isMuted ? <MicOff size={24}/> : <Volume2 size={24}/>}
+                    </button>
+                    
+                    <button 
+                        onClick={mode === "idle" ? startListening : stopListening}
+                        className={`group relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${mode === "listening" ? "bg-red-500 scale-110 shadow-[0_0_50px_rgba(239,68,68,0.5)]" : "bg-white hover:scale-105"}`}
+                    >
+                        <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20" />
+                        {mode === "listening" ? <X size={40} className="text-white" /> : <Mic size={40} className="text-black" />}
+                    </button>
 
-      {/* Input Area */}
-      <div className="p-8 z-10">
-        <div className="max-w-4xl mx-auto relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-[2rem] blur opacity-20 group-focus-within:opacity-40 transition-opacity" />
-          <div className="relative flex items-center gap-3 p-2 bg-white/5 border border-white/10 backdrop-blur-2xl rounded-[1.8rem] transition-all focus-within:border-white/20">
-            <button 
-              onClick={() => setIsListening(!isListening)}
-              className={`p-4 rounded-2xl transition-all ${isListening ? "bg-red-500 text-white animate-pulse" : "bg-white/5 text-white/40 hover:text-white"}`}
-            >
-              <Mic size={20} />
-            </button>
-            <input
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Send a live command..."
-              className="flex-1 bg-transparent border-none outline-none text-sm font-bold tracking-wide placeholder-white/20 p-2"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!prompt.trim() || isStreaming}
-              className="p-4 bg-white text-black rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
-            >
-              <Send size={20} />
-            </button>
-          </div>
+                    <button className="p-4 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white transition-all">
+                        <MessageSquare size={24}/>
+                    </button>
+                </div>
+                
+                <div className="flex items-center gap-8 text-[10px] font-black uppercase tracking-[0.4em] text-white/20">
+                    <span className="flex items-center gap-2"><ShieldCheck size={12}/> Quantum Encrypted</span>
+                    <span className="flex items-center gap-2"><Sparkles size={12}/> Gemini 3.1 Neural</span>
+                </div>
+            </footer>
+
+            <style>{`
+                @keyframes slow-pan {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                .animate-slow-pan {
+                    background-size: 200% 200%;
+                    animation: slow-pan 10s ease infinite;
+                }
+            `}</style>
         </div>
-        <p className="text-center text-[10px] text-white/20 font-black uppercase tracking-[0.3em] mt-6">
-            Neural link active • 3.1 Flash Live • Zero Latency Mode
-        </p>
-      </div>
-
-      <style>{`
-        @keyframes wave {
-          0%, 100% { transform: scaleY(1); }
-          50% { transform: scaleY(2.5); }
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
-    </div>
-  );
+    );
 }
