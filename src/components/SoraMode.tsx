@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Crown, AlertCircle, ChevronUp, ChevronDown, MoreHorizontal, Sparkles } from "lucide-react";
+import { Plus, Mic, ThumbsUp, ThumbsDown, Copy, Download, RefreshCw, Send, Zap, Brain, ShieldCheck, Loader2, Crown, AlertCircle, ChevronUp, ChevronDown, MoreHorizontal, Sparkles, Activity } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { BACKEND_URL } from "@/lib/config";
@@ -48,9 +48,10 @@ interface SoraMessage {
 interface SoraModeProps {
     enabledModels: Record<string, boolean>;
     isAuthorized: boolean;
+    onOpenLive?: () => void;
 }
 
-export default function SoraMode({ enabledModels = {}, isAuthorized }: SoraModeProps) {
+export default function SoraMode({ enabledModels = {}, isAuthorized, onOpenLive }: SoraModeProps) {
     const { theme } = useTheme();
     const sessionEmail = "public-user";
     const [messages, setMessages] = useState<SoraMessage[]>([]);
@@ -398,6 +399,16 @@ export default function SoraMode({ enabledModels = {}, isAuthorized }: SoraModeP
                             placeholder={isGlobalStreaming ? "Processing..." : `Ask me anything...`}
                             className="flex-1 bg-transparent text-foreground placeholder-foreground/20 outline-none focus:ring-0 border-none text-[15px] py-1 font-normal shadow-none"
                         />
+
+                        {onOpenLive && (
+                            <button 
+                                onClick={onOpenLive}
+                                className="flex-shrink-0 p-2 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 group"
+                            >
+                                <Activity className="w-4 h-4 animate-pulse" />
+                                <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Live</span>
+                            </button>
+                        )}
                         
                         <button className="flex-shrink-0 p-1 text-foreground/40 hover:text-foreground transition-all">
                             <Mic className="w-5 h-5" />

@@ -694,7 +694,7 @@ export default function Home() {
 
         {/* Tab Content */}
         <section className="flex-1 overflow-hidden relative">
-          {activeTab === "sora" && <SoraMode enabledModels={enabledModels} isAuthorized={!!isAuthorized} />}
+          {activeTab === "sora" && <SoraMode enabledModels={enabledModels} isAuthorized={!!isAuthorized} onOpenLive={() => setActiveTab("live")} />}
           {activeTab === "superfiesta" && (
             <AIFiestaMode
               onSendPrompt={handleSendPrompt}
