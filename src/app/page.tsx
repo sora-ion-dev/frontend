@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain, Zap, Send, Plus, Lock as LockIcon } from "lucide-react";
+import { Menu, Search, MessageSquarePlus, Maximize, Settings, Sparkles, X, RefreshCw, Trophy, History as HistoryIcon, LogOut, Shield, CreditCard, Loader2, Layers, Brain, Zap, Send, Plus, Lock as LockIcon, Activity } from "lucide-react";
 import { AIBrand, ChatMessage, MODEL_BRANDS, FIESTA_BRAND_IDS } from "@/types";
 import { BACKEND_URL } from "@/lib/config";
 import AIColumn from "@/components/AIColumn";

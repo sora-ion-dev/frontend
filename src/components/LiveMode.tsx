@@ -206,7 +206,7 @@ export default function LiveMode() {
         </p>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes wave {
           0%, 100% { transform: scaleY(1); }
           50% { transform: scaleY(2.5); }
