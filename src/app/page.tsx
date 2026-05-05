@@ -11,6 +11,7 @@ import PlaySora from "@/components/PlaySora";
 import AIFiestaMode from "@/components/AIFiestaMode";
 import SettingsModal from "@/components/SettingsModal";
 import SuperSearchMode from "@/components/SuperSearchMode";
+import LiveMode from "@/components/LiveMode";
 import AccessGate from "@/components/AccessGate";
 
 const AUTHORIZATION_KEY = "2103";
@@ -30,7 +31,7 @@ export default function Home() {
   const [rankings, setRankings] = useState<string[]>([]);
   const [personality, setPersonality] = useState("Professional");
   const [webSearch, setWebSearch] = useState(false);
-  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "play_sora" | "super_search">("superfiesta");
+  const [activeTab, setActiveTab] = useState<"superfiesta" | "sora" | "prompt_ai" | "play_sora" | "super_search" | "live">("superfiesta");
   
   const [isAuthorized, setIsAuthorized] = useState<boolean>(true);
   const [messageCount, setMessageCount] = useState(0);
@@ -584,6 +585,23 @@ export default function Home() {
             </div>
           </button>
 
+          <button
+            onClick={() => setActiveTab("live")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${activeTab === "live" ? "bg-red-500/10 border border-red-500/20 text-red-500 shadow-lg shadow-red-500/5" : "text-foreground/40 hover:bg-foreground/5 hover:text-foreground"}`}
+          >
+            <div className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${activeTab === "live" ? "bg-red-500/20" : "bg-foreground/5"}`}>
+              <Activity className="w-5 h-5 text-red-500" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                Live Mode
+                <span className="px-1.5 py-0.5 bg-red-500 text-white text-[8px] rounded-full animate-pulse">LIVE</span>
+              </span>
+              <span className="text-[9px] font-medium opacity-50">Real-time Interaction</span>
+            </div>
+          </button>
+
+
 
 
           <button
@@ -697,6 +715,7 @@ export default function Home() {
           {activeTab === "play_sora" && <PlaySora />}
           {activeTab === "prompt_ai" && <PromptMode />}
           {activeTab === "super_search" && <SuperSearchMode />}
+          {activeTab === "live" && <LiveMode />}
         </section>
 
         {isSettingsOpen && (
