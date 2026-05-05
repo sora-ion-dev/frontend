@@ -40,7 +40,7 @@ export default function LiveMode() {
 
         const chunk = audioQueue.current.shift()!;
         try {
-            const audioBuffer = await audioContextRef.current!.decodeAudioData(chunk.buffer);
+            const audioBuffer = await audioContextRef.current!.decodeAudioData(chunk.buffer as ArrayBuffer);
             const source = audioContextRef.current!.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(audioContextRef.current!.destination);
