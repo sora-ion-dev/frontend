@@ -38,7 +38,7 @@ function ParticleField({ count = 500 }) {
 }
 
 // --- 3D NEURAL ORB COMPONENT ---
-function NeuralOrb({ mode }: { mode: string }) {
+function NeuralOrb({ mode, isMobile }: { mode: string, isMobile: boolean }) {
     const meshRef = useRef<any>(null);
     const color = useMemo(() => {
         if (mode === "listening") return "#60a5fa";
@@ -63,7 +63,7 @@ function NeuralOrb({ mode }: { mode: string }) {
             <pointLight position={[10, 10, 10]} intensity={2} color={color} />
             <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
             <Float speed={4} rotationIntensity={1} floatIntensity={2}>
-                <Sphere ref={meshRef} args={[1, 100, 100]} scale={1.8}>
+                <Sphere ref={meshRef} args={[1, 100, 100]} scale={isMobile ? 1.4 : 1.8}>
                     <MeshDistortMaterial
                         color={color}
                         attach="material"
